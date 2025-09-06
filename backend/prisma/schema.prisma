@@ -1,0 +1,420 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  customer
+  vendor
+  admin
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum VendorEarningStatus {
+  pending
+  paid
+  cancelled
+}
+
+enum DiscountType {
+  percentage
+  fixed
+}
+
+enum ShippingConditionType {
+  weight
+  price
+  quantity
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String
+  role          UserRole
+  firstName     String
+  lastName      String
+  phone         String?
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  vendor        Vendor?
+  orders        Order[]
+  reviews       Review[]
+  wishlists     Wishlist[]
+  sessions      Session[]
+  notifications Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Vendor {
+  id                  Int                @id @default(autoincrement())
+  userId              Int                @unique
+  businessName        String
+  businessDescription String?
+  businessAddress     String
+  businessPhone       String?
+  taxId               String?
+  bankAccountDetails  Json?
+  commissionRate      Decimal            @default(10.00)
+  isVerified          Boolean            @default(false)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products   Product[]
+  orderItems OrderItem[]
+  earnings   VendorEarning[]
+
+  @@index([userId])
+  @@index([isVerified])
+  @@map("vendors")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  parentId    Int?
+  slug        String    @unique
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([isActive])
+  @@map("categories")
+}
+
+model Product {
+  id               Int      @id @default(autoincrement())
+  vendorId         Int
+  categoryId       Int
+  name             String
+  description      String?
+  shortDescription String?
+  sku              String    @unique
+  price            Decimal
+  compareAtPrice   Decimal?
+  costPrice        Decimal?
+  stockQuantity    Int       @default(0)
+  minStockLevel    Int       @default(0)
+  weight           Decimal?
+  dimensions       Json?
+  images           Json?
+  tags             String[]
+  isActive         Boolean   @default(true)
+  isFeatured       Boolean   @default(false)
+  requiresShipping Boolean   @default(true)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  vendor     Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  category   Category         @relation(fields: [categoryId], references: [id])
+  variants   ProductVariant[]
+  orderItems OrderItem[]
+  reviews    Review[]
+  wishlists  Wishlist[]
+
+  @@index([vendorId])
+  @@index([categoryId])
+  @@index([sku])
+  @@index([isActive])
+  @@index([price])
+  @@index([createdAt])
+  @@map("products")
+}
+
+model ProductVariant {
+  id            Int      @id @default(autoincrement())
+  productId     Int
+  name          String
+  value         String
+  skuSuffix     String?
+  priceModifier Decimal  @default(0)
+  stockQuantity Int      @default(0)
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model Order {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  orderNumber     String        @unique
+  status          OrderStatus   @default(pending)
+  subtotal        Decimal
+  taxAmount       Decimal       @default(0)
+  shippingAmount  Decimal       @default(0)
+  discountAmount  Decimal       @default(0)
+  totalAmount     Decimal
+  currency        String        @default("USD")
+  shippingAddress Json
+  billingAddress  Json
+  paymentMethod   String?
+  paymentStatus   PaymentStatus @default(pending)
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  payments   Payment[]
+  earnings   VendorEarning[]
+  reviews    Review[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              Int     @id @default(autoincrement())
+  orderId         Int
+  productId       Int
+  vendorId        Int
+  quantity        Int
+  unitPrice       Decimal
+  totalPrice      Decimal
+  productSnapshot Json
+
+  // Relations
+  order    Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product  Product         @relation(fields: [productId], references: [id])
+  vendor   Vendor          @relation(fields: [vendorId], references: [id])
+  earnings VendorEarning[]
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([vendorId])
+  @@map("order_items")
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  orderId         Int
+  amount          Decimal
+  currency        String        @default("USD")
+  paymentMethod   String
+  transactionId   String?       @unique
+  status          PaymentStatus @default(pending)
+  paymentGateway  String?
+  gatewayResponse Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([transactionId])
+  @@index([status])
+  @@map("payments")
+}
+
+model VendorEarning {
+  id               Int                @id @default(autoincrement())
+  vendorId         Int
+  orderId          Int
+  orderItemId      Int
+  grossAmount      Decimal
+  commissionAmount Decimal
+  netAmount        Decimal
+  status           VendorEarningStatus @default(pending)
+  paidAt           DateTime?
+  createdAt        DateTime           @default(now())
+
+  // Relations
+  vendor    Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([orderId])
+  @@index([status])
+  @@map("vendor_earnings")
+}
+
+model Coupon {
+  id                    Int          @id @default(autoincrement())
+  code                  String       @unique
+  description           String?
+  discountType          DiscountType
+  discountValue         Decimal
+  minimumOrderAmount    Decimal?
+  maximumDiscountAmount Decimal?
+  usageLimit            Int?
+  usageCount            Int          @default(0)
+  validFrom             DateTime
+  validUntil            DateTime
+  isActive              Boolean      @default(true)
+  applicableCategories  Int[]        @default([])
+  applicableProducts    Int[]        @default([])
+
+  @@index([code])
+  @@index([isActive])
+  @@index([validUntil])
+  @@map("coupons")
+}
+
+model ShippingZone {
+  id        Int      @id @default(autoincrement())
+  name      String
+  countries String[]
+  states    String[]
+  zipCodes  String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  // Relations
+  rates ShippingRate[]
+
+  @@map("shipping_zones")
+}
+
+model ShippingRate {
+  id             Int                   @id @default(autoincrement())
+  shippingZoneId Int
+  name           String
+  conditionType  ShippingConditionType
+  minValue       Decimal?
+  maxValue       Decimal?
+  rate           Decimal
+  isActive       Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+
+  // Relations
+  shippingZone ShippingZone @relation(fields: [shippingZoneId], references: [id], onDelete: Cascade)
+
+  @@index([shippingZoneId])
+  @@map("shipping_rates")
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  userId     Int
+  orderId    Int?
+  rating     Int
+  title      String?
+  comment    String?
+  isVerified Boolean  @default(false)
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([productId, userId, orderId])
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([isApproved])
+  @@map("reviews")
+}
+
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("wishlists")
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
