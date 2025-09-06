@@ -1,0 +1,18 @@
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-json",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-css-peek",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-css-intellisense",
+    "usernamehw.errorlens",
+    "ms-vscode.vscode-jest",
+    "humao.rest-client",
+    "ms-vscode.vscode-docker",
+    "ms-vscode-remote.remote-containers"
+  ]
+}
