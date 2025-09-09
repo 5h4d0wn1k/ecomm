@@ -1,9 +1,13 @@
 import { Router } from 'express';
+import { authenticate, requireRole } from '../middlewares';
+import { validateCoupon, createCoupon } from '../controllers/coupons';
+
 const router = Router();
 
-// TODO: Implement coupon routes
-router.get('/', (req, res) => {
-  res.json({ message: 'Coupons endpoint - TODO' });
-});
+// Public routes
+router.get('/validate', validateCoupon);
+
+// Protected routes (Admin only)
+router.post('/', authenticate, requireRole('admin', 'super_admin'), createCoupon);
 
 export default router;

@@ -1,12 +1,37 @@
-import Stripe from 'stripe';
+import Razorpay from 'razorpay';
 import { prisma } from '../config';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || '',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
 });
 
+export interface CreateOrderData {
+  amount: number; // Amount in cents (smallest currency unit)
+  currency?: string;
+  orderId: number;
+  customerId?: string;
+  metadata?: Record<string, string>;
+}
+
+export interface OrderResult {
+  orderId: string;
+  amount: number;
+  currency: string;
+  key: string;
+  paymentIntentId?: string;
+  clientSecret?: string;
+  publishableKey?: string;
+}
+
+export interface RefundData {
+  paymentId: string;
+  amount?: number; // Amount to refund (optional, full refund if not specified)
+  reason?: string;
+}
+
 export interface CreatePaymentIntentData {
-  amount: number; // Amount in smallest currency unit (e.g., cents for USD)
+  amount: number;
   currency?: string;
   orderId: number;
   customerId?: string;
@@ -14,117 +39,136 @@ export interface CreatePaymentIntentData {
 }
 
 export interface PaymentIntentResult {
+  paymentIntentId: string;
   clientSecret: string;
-  paymentIntentId: string;
-}
-
-export interface RefundData {
-  paymentIntentId: string;
-  amount?: number; // Amount to refund (optional, full refund if not specified)
-  reason?: 'duplicate' | 'fraudulent' | 'requested_by_customer';
+  amount: number;
+  currency: string;
+  publishableKey: string;
 }
 
 /**
  * Payment Service
- * Handles payment processing with Stripe
+ * Handles payment processing with Razorpay
  */
 export class PaymentService {
   /**
-   * Create a payment intent for order payment
-   */
-  static async createPaymentIntent(data: CreatePaymentIntentData): Promise<PaymentIntentResult> {
+    * Create a Razorpay order for payment
+    */
+  static async createOrder(data: CreateOrderData): Promise<OrderResult> {
     try {
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: data.amount,
-        currency: data.currency || 'inr',
-        customer: data.customerId,
-        metadata: {
+      const orderOptions = {
+        amount: data.amount, // Amount in paise
+        currency: data.currency || 'INR',
+        receipt: `order_${data.orderId}`,
+        notes: {
           orderId: data.orderId.toString(),
           ...data.metadata,
         },
-        automatic_payment_methods: {
-          enabled: true,
-        },
-      });
+      };
+
+      const order = await razorpay.orders.create(orderOptions);
 
       return {
-        clientSecret: paymentIntent.client_secret!,
-        paymentIntentId: paymentIntent.id,
+        orderId: order.id,
+        amount: +order.amount,
+        currency: order.currency,
+        key: process.env.RAZORPAY_KEY_ID || '',
+        paymentIntentId: order.id, // For backward compatibility
+        clientSecret: '', // Razorpay doesn't use client secrets like Stripe
+        publishableKey: process.env.RAZORPAY_KEY_ID || '', // For backward compatibility
       };
     } catch (error) {
-      console.error('Stripe payment intent creation failed:', error);
-      throw new Error('Failed to create payment intent');
+      console.error('Razorpay order creation failed:', error);
+      throw new Error('Failed to create payment order');
     }
   }
 
   /**
-   * Confirm payment intent and update order
-   */
-  static async confirmPayment(paymentIntentId: string): Promise<boolean> {
+    * Verify and confirm Razorpay payment
+    */
+  static async verifyPayment(razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string): Promise<boolean> {
     try {
-      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-      
-      if (paymentIntent.status === 'succeeded') {
-        const orderId = parseInt(paymentIntent.metadata.orderId);
-        
-        // Update order and payment status
-        await prisma.$transaction(async (tx) => {
-          // Update order status
-          await tx.order.update({
-            where: { id: orderId },
-            data: {
-              paymentStatus: 'paid',
-              status: 'confirmed',
-              updatedAt: new Date(),
-            },
+      // Verify payment signature
+      const sign = razorpayOrderId + '|' + razorpayPaymentId;
+      const expectedSign = require('crypto')
+        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+        .update(sign.toString())
+        .digest('hex');
+
+      if (razorpaySignature === expectedSign) {
+        // Fetch payment details
+        const payment = await razorpay.payments.fetch(razorpayPaymentId);
+
+        if (payment.status === 'captured') {
+          const orderId = parseInt(payment.notes?.orderId || '0');
+
+          // Update order and payment status
+          await prisma.$transaction(async (tx) => {
+            // Update order status
+            await tx.order.update({
+              where: { id: orderId },
+              data: {
+                paymentStatus: 'paid',
+                status: 'confirmed',
+                updatedAt: new Date(),
+              },
+            });
+
+            // Create or update payment record
+            await tx.payment.upsert({
+              where: { transactionId: razorpayPaymentId },
+              create: {
+                orderId,
+                amount: +payment.amount / 100, // Convert from paise
+                currency: payment.currency.toUpperCase(),
+                status: 'paid',
+                transactionId: razorpayPaymentId,
+                paymentMethod: payment.method,
+                paymentGateway: 'razorpay',
+                gatewayResponse: payment as any,
+              },
+              update: {
+                status: 'paid',
+                gatewayResponse: payment as any,
+                updatedAt: new Date(),
+              },
+            });
           });
 
-          // Create or update payment record
-          await tx.payment.upsert({
-            where: { transactionId: paymentIntentId },
-            create: {
-              orderId,
-              amount: paymentIntent.amount / 100, // Convert from cents
-              currency: paymentIntent.currency.toUpperCase(),
-              status: 'completed',
-              transactionId: paymentIntentId,
-              paymentMethod: 'card',
-              paymentGateway: 'stripe',
-              gatewayResponse: paymentIntent as any,
-            },
-            update: {
-              status: 'completed',
-              gatewayResponse: paymentIntent as any,
-              updatedAt: new Date(),
-            },
-          });
-        });
-
-        return true;
+          return true;
+        }
       }
 
       return false;
     } catch (error) {
-      console.error('Payment confirmation failed:', error);
-      throw new Error('Failed to confirm payment');
+      console.error('Payment verification failed:', error);
+      throw new Error('Failed to verify payment');
     }
   }
 
   /**
-   * Process refund for payment
-   */
+    * Process refund for Razorpay payment
+    */
   static async processRefund(data: RefundData): Promise<boolean> {
     try {
-      const refund = await stripe.refunds.create({
-        payment_intent: data.paymentIntentId,
-        amount: data.amount,
-        reason: data.reason,
-      });
+      const refundOptions: any = {
+        payment_id: data.paymentId,
+      };
 
-      if (refund.status === 'succeeded') {
+      if (data.amount !== undefined) {
+        refundOptions.amount = data.amount;
+      }
+
+      if (data.reason !== undefined) {
+        refundOptions.notes = { reason: data.reason };
+      }
+
+      const refund = await razorpay.payments.refund(data.paymentId, refundOptions);
+
+      if (refund.status === 'processed' || refund.status === 'pending') {
         // Update payment status
         await prisma.payment.updateMany({
-          where: { transactionId: data.paymentIntentId },
+          where: { transactionId: data.paymentId },
           data: {
             status: 'refunded',
             updatedAt: new Date(),
@@ -133,7 +177,7 @@ export class PaymentService {
 
         // Update order status
         const payment = await prisma.payment.findFirst({
-          where: { transactionId: data.paymentIntentId },
+          where: { transactionId: data.paymentId },
           select: { orderId: true },
         });
 
@@ -159,23 +203,57 @@ export class PaymentService {
   }
 
   /**
-   * Handle Stripe webhook events
+   * Handle Razorpay webhook events
    */
-  static async handleWebhook(event: Stripe.Event): Promise<void> {
+  static async handleWebhook(event: any): Promise<void> {
     try {
-      switch (event.type) {
-        case 'payment_intent.succeeded':
-          const paymentIntent = event.data.object as Stripe.PaymentIntent;
-          await this.confirmPayment(paymentIntent.id);
+      switch (event.event) {
+        case 'payment.captured':
+          const capturedPayment = event.payload.payment.entity;
+          // For webhook events, we don't need to verify signature again as it's already verified
+          // Just update the order status
+          const capturedOrderId = parseInt(capturedPayment.notes?.orderId || '0');
+
+          await prisma.$transaction(async (tx) => {
+            // Update order status
+            await tx.order.update({
+              where: { id: capturedOrderId },
+              data: {
+                paymentStatus: 'paid',
+                status: 'confirmed',
+                updatedAt: new Date(),
+              },
+            });
+
+            // Create or update payment record
+            await tx.payment.upsert({
+              where: { transactionId: capturedPayment.id },
+              create: {
+                orderId: capturedOrderId,
+                amount: Number(capturedPayment.amount) / 100, // Convert from paise
+                currency: capturedPayment.currency.toUpperCase(),
+                status: 'paid',
+                transactionId: capturedPayment.id,
+                paymentMethod: capturedPayment.method,
+                paymentGateway: 'razorpay',
+                gatewayResponse: capturedPayment as any,
+              },
+              update: {
+                status: 'paid',
+                gatewayResponse: capturedPayment as any,
+                updatedAt: new Date(),
+              },
+            });
+          });
           break;
 
-        case 'payment_intent.payment_failed':
-          const failedPayment = event.data.object as Stripe.PaymentIntent;
-          const orderId = parseInt(failedPayment.metadata.orderId);
-          
+        case 'payment.failed':
+          const failedPayment = event.payload.payment.entity;
+          const failedOrderId = parseInt(failedPayment.notes?.orderId || '0');
+
           await prisma.$transaction(async (tx) => {
             await tx.order.update({
-              where: { id: orderId },
+              where: { id: failedOrderId },
               data: {
                 paymentStatus: 'failed',
                 updatedAt: new Date(),
@@ -185,13 +263,13 @@ export class PaymentService {
             await tx.payment.upsert({
               where: { transactionId: failedPayment.id },
               create: {
-                orderId,
-                amount: failedPayment.amount / 100,
+                orderId: failedOrderId,
+                amount: Number(failedPayment.amount) / 100,
                 currency: failedPayment.currency.toUpperCase(),
                 status: 'failed',
                 transactionId: failedPayment.id,
-                paymentMethod: 'card',
-                paymentGateway: 'stripe',
+                paymentMethod: failedPayment.method,
+                paymentGateway: 'razorpay',
                 gatewayResponse: failedPayment as any,
               },
               update: {
@@ -204,12 +282,12 @@ export class PaymentService {
           break;
 
         case 'refund.created':
-          const refund = event.data.object as Stripe.Refund;
+          const refund = event.payload.refund.entity;
           console.log('Refund created:', refund.id);
           break;
 
         default:
-          console.log(`Unhandled event type: ${event.type}`);
+          console.log(`Unhandled event type: ${event.event}`);
       }
     } catch (error) {
       console.error('Webhook handling failed:', error);

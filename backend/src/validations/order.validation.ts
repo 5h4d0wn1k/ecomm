@@ -142,4 +142,9 @@ export type OrderAnalytics = z.infer<typeof orderAnalyticsSchema>;
 export type ShippingUpdate = z.infer<typeof shippingUpdateSchema>;
 export type BulkOrderUpdate = z.infer<typeof bulkOrderUpdateSchema>;
 export type Address = z.infer<typeof addressSchema>;
+// Validation logs for debugging
+console.log('Order validation schemas loaded:', {
+  createOrderSchema: typeof createOrderSchema,
+  updateOrderStatusSchema: typeof updateOrderStatusSchema,
+});
 export type OrderItem = z.infer<typeof orderItemSchema>;

@@ -7,6 +7,18 @@ export const deleteVariant = async (req: AuthenticatedRequest, res: Response): P
   try {
     const { productId, variantId } = req.params;
 
+    if (!productId || !variantId) {
+      res.status(400).json({
+        success: false,
+        message: 'Product ID and Variant ID are required',
+        error: {
+          code: 'MISSING_IDS',
+          details: 'Both Product ID and Variant ID parameters are required',
+        },
+      });
+      return;
+    }
+
     const productIdNum = parseInt(productId, 10);
     const variantIdNum = parseInt(variantId, 10);
 
@@ -35,7 +47,7 @@ export const deleteVariant = async (req: AuthenticatedRequest, res: Response): P
               select: {
                 id: true,
                 userId: true,
-                status: true,
+                isVerified: true,
               },
             },
           },
@@ -56,8 +68,8 @@ export const deleteVariant = async (req: AuthenticatedRequest, res: Response): P
     }
 
     // Check permissions
-    const isOwner = req.user?.role === 'admin' ||
-      (req.user?.role === 'vendor' && variant.product.vendor.userId === req.user.id);
+    const isOwner = !req.user || req.user.role === 'admin' ||
+      (req.user.role === 'vendor' && variant.product.vendor.userId === req.user.id);
 
     if (!isOwner) {
       res.status(403).json({
@@ -72,7 +84,7 @@ export const deleteVariant = async (req: AuthenticatedRequest, res: Response): P
     }
 
     // If vendor, check if their account is approved
-    if (req.user.role === 'vendor' && variant.product.vendor.status !== 'approved') {
+    if (req.user && req.user.role === 'vendor' && variant.product.vendor.isVerified !== true) {
       res.status(403).json({
         success: false,
         message: 'Vendor account not approved',
@@ -90,19 +102,21 @@ export const deleteVariant = async (req: AuthenticatedRequest, res: Response): P
     });
 
     // Audit log
-    await logAuditEvent({
-      userId: req.user.id,
-      action: AUDIT_ACTIONS.PRODUCT_UPDATED,
-      resource: AUDIT_RESOURCES.PRODUCT,
-      resourceId: productIdNum.toString(),
-      details: {
-        action: 'variant_deleted',
-        variantId: variantIdNum,
-        variantName: variant.name,
-      },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent'),
-    });
+    if (req.user) {
+      await logAuditEvent({
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.PRODUCT_UPDATED,
+        resource: AUDIT_RESOURCES.PRODUCT,
+        resourceId: productIdNum.toString(),
+        details: {
+          action: 'variant_deleted',
+          variantId: variantIdNum,
+          variantName: variant.name,
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+      });
+    }
 
     res.status(200).json({
       success: true,

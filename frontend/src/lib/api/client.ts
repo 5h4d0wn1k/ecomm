@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore } from '@/lib/stores/auth-store'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1'
 
 class ApiClient {
   private client: AxiosInstance
@@ -36,24 +37,16 @@ class ApiClient {
       async (error) => {
         if (error.response?.status === 401) {
           // Token expired, try to refresh
-          const refreshToken = this.getRefreshToken()
-          if (refreshToken) {
-            try {
-              const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-                refreshToken,
-              })
-              const { token } = refreshResponse.data.data
-              this.setToken(token)
-              // Retry the original request
-              error.config.headers.Authorization = `Bearer ${token}`
-              return this.client.request(error.config)
-            } catch (refreshError) {
-              this.logout()
+          const newToken = await useAuthStore.getState().refreshAccessToken()
+          if (newToken) {
+            // Retry the original request
+            error.config.headers.Authorization = `Bearer ${newToken}`
+            return this.client.request(error.config)
+          } else {
+            // Refresh failed, redirect to login
+            if (typeof window !== 'undefined') {
               window.location.href = '/login'
             }
-          } else {
-            this.logout()
-            window.location.href = '/login'
           }
         }
         return Promise.reject(error)
@@ -62,51 +55,39 @@ class ApiClient {
   }
 
   private getToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('accessToken')
-    }
-    return null
+    return useAuthStore.getState().token
   }
 
   private getRefreshToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('refreshToken')
-    }
-    return null
+    return useAuthStore.getState().refreshToken
   }
 
   private setToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', token)
-    }
+    useAuthStore.getState().refreshTokenFn(token)
   }
 
   private logout(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
-    }
+    useAuthStore.getState().logout()
   }
 
   // HTTP methods
-  async get<T = any>(url: string, config?: any): Promise<AxiosResponse<T>> {
+  async get<T = unknown>(url: string, config?: InternalAxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.get(url, config)
   }
 
-  async post<T = any>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+  async post<T = unknown>(url: string, data?: unknown, config?: InternalAxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.post(url, data, config)
   }
 
-  async put<T = any>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+  async put<T = unknown>(url: string, data?: unknown, config?: InternalAxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.put(url, data, config)
   }
 
-  async patch<T = any>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+  async patch<T = unknown>(url: string, data?: unknown, config?: InternalAxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.patch(url, data, config)
   }
 
-  async delete<T = any>(url: string, config?: any): Promise<AxiosResponse<T>> {
+  async delete<T = unknown>(url: string, config?: InternalAxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.delete(url, config)
   }
 }

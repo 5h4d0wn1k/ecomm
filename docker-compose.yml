@@ -8,18 +8,18 @@ services:
     env_file:
       - .env.development
     environment:
-      POSTGRES_DB: ecommerce_dev
-      POSTGRES_USER: postgres
+      POSTGRES_DB: davcreationsdb
+      POSTGRES_USER: davcreationsuser
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/prisma:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce_dev"]
+      test: ["CMD-SHELL", "pg_isready -U davcreationsuser -d davcreationsdb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -54,7 +54,7 @@ services:
     env_file:
       - .env.development
     environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/ecommerce_dev
+      - DATABASE_URL=postgresql://davcreationsuser:${POSTGRES_PASSWORD}@postgres:5432/davcreationsdb
       - REDIS_URL=redis://redis:6379
     depends_on:
       postgres:
@@ -83,6 +83,38 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ecommerce-frontend
+    restart: unless-stopped
+    env_file:
+      - .env.development
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3001/api/v1
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./frontend/.next:/app/.next
+    networks:
+      - frontend
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   nginx:
     image: nginx:1.25-alpine
     container_name: ecommerce-nginx
@@ -97,6 +129,7 @@ services:
       - ./backend/uploads:/var/www/uploads:ro
     depends_on:
       - backend
+      - frontend
     networks:
       - frontend
     healthcheck:
@@ -115,6 +148,5 @@ volumes:
 networks:
   backend:
     driver: bridge
-    internal: true
   frontend:
     driver: bridge

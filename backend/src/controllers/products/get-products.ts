@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma } from '../../config';
 import { AuthenticatedRequest } from '../../middlewares';
+import enhancedSearchService from '../../services/enhanced-search.service';
+import { CacheService } from '../../services/cache.service';
 
 /**
  * Get products with filtering, search, and pagination
@@ -15,112 +17,85 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       vendor,
       minPrice,
       maxPrice,
+      ratingMin,
       status,
       isActive,
       isFeatured,
-      sort = 'created_desc',
+      tags,
+      inStock,
+      sort = 'relevance',
+      includeFacets = 'true',
     } = req.query;
 
-    const skip = (Number(page) - 1) * Number(limit);
-
-    // Build where clause
-    const where: any = {};
-
-    // Search functionality
-    if (search) {
-      where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
-        { shortDescription: { contains: search as string, mode: 'insensitive' } },
-        { tags: { has: search as string } },
-      ];
-    }
+    // Build filters object
+    const filters: any = {};
 
     // Category filter
     if (category) {
-      where.categoryId = parseInt(category as string);
+      filters.category = Array.isArray(category) ? category : [category as string];
     }
 
     // Vendor filter
     if (vendor) {
-      where.vendorId = parseInt(vendor as string);
+      filters.vendor = Array.isArray(vendor) ? vendor : [vendor as string];
     }
 
     // Price range filter
-    if (minPrice || maxPrice) {
-      where.price = {};
-      if (minPrice) where.price.gte = parseFloat(minPrice as string);
-      if (maxPrice) where.price.lte = parseFloat(maxPrice as string);
-    }
+    if (minPrice) filters.priceMin = parseFloat(minPrice as string);
+    if (maxPrice) filters.priceMax = parseFloat(maxPrice as string);
+
+    // Rating filter
+    if (ratingMin) filters.ratingMin = parseFloat(ratingMin as string);
 
     // Status filter
     if (status) {
-      where.status = status;
+      filters.status = Array.isArray(status) ? status : [status as string];
     }
 
     // Active filter
     if (isActive !== undefined) {
-      where.isActive = isActive === 'true';
+      filters.status = isActive === 'true' ? ['active'] : ['inactive'];
     }
 
     // Featured filter
     if (isFeatured !== undefined) {
-      where.isFeatured = isFeatured === 'true';
+      filters.isFeatured = isFeatured === 'true';
+    }
+
+    // Tags filter
+    if (tags) {
+      filters.tags = Array.isArray(tags) ? tags : [tags as string];
+    }
+
+    // Stock filter
+    if (inStock !== undefined) {
+      filters.inStock = inStock === 'true';
     }
 
     // Only show active products for non-admin users
     const user = (req as AuthenticatedRequest).user;
     if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
-      where.isActive = true;
+      filters.status = filters.status || ['active'];
     }
 
-    // Build order by clause
-    let orderBy: any = { createdAt: 'desc' };
-    switch (sort) {
-      case 'price_asc':
-        orderBy = { price: 'asc' };
-        break;
-      case 'price_desc':
-        orderBy = { price: 'desc' };
-        break;
-      case 'name_asc':
-        orderBy = { name: 'asc' };
-        break;
-      case 'name_desc':
-        orderBy = { name: 'desc' };
-        break;
-      case 'created_asc':
-        orderBy = { createdAt: 'asc' };
-        break;
-      case 'rating_desc':
-        orderBy = [
-          { reviews: { _count: 'desc' } },
-          { createdAt: 'desc' },
-        ];
-        break;
-    }
+    // Use enhanced search service
+    const searchResult = await enhancedSearchService.searchProducts({
+      query: search as string,
+      filters,
+      sort: sort as string,
+      page: Number(page),
+      limit: Number(limit),
+      includeFacets: includeFacets === 'true',
+    });
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        skip,
-        take: Number(limit),
-        orderBy,
+    // Get additional product details from database for variants and other relations
+    const productIds = searchResult.products.map(p => p.id);
+    if (productIds.length > 0) {
+      const productsWithDetails = await prisma.product.findMany({
+        where: {
+          id: { in: productIds },
+        },
         include: {
-          vendor: {
-            select: {
-              id: true,
-              businessName: true,
-              isVerified: true,
-            },
-          },
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
           variants: {
             where: { isActive: true },
             select: {
@@ -131,47 +106,33 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
               stockQuantity: true,
             },
           },
-          reviews: {
-            select: {
-              
-            },
-          },
           _count: {
             select: {
               reviews: true,
               wishlists: true,
+              orderItems: true,
             },
           },
         },
-      }),
-      prisma.product.count({ where }),
-    ]);
+      });
 
-    // Calculate average rating for each product
-    const productsWithRatings = products.map(product => {
-      const totalRatings = product.reviews?.length || 0;
-      const averageRating = totalRatings > 0
-        ? (product.reviews?.reduce((sum: number, review: any) => sum + review.rating, 0) || 0) / totalRatings
-        : 0;
-
-      const { reviews, ...productData } = product;
-      return {
-        ...productData,
-        averageRating: Math.round(averageRating * 10) / 10,
-        totalReviews: totalRatings,
-        totalWishlisted: product._count?.wishlists || 0,
-      };
-    });
+      // Merge Elasticsearch results with database details
+      const productsMap = new Map(productsWithDetails.map(p => [p.id, p]));
+      searchResult.products = searchResult.products.map(product => {
+        const dbProduct = productsMap.get(product.id);
+        return {
+          ...product,
+          variants: dbProduct?.variants || [],
+          totalSold: dbProduct?._count?.orderItems || 0,
+        };
+      });
+    }
 
     res.status(200).json({
       success: true,
-      data: productsWithRatings,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
+      data: searchResult.products,
+      facets: searchResult.facets,
+      pagination: searchResult.pagination,
     });
   } catch (error) {
     console.error('Get products error:', error);
@@ -205,6 +166,13 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
     }
     const productId = parseInt(id);
 
+    // Try to get from cache first
+    const cachedProduct = await CacheService.getCachedProduct(productId);
+    if (cachedProduct) {
+      res.status(200).json(cachedProduct);
+      return;
+    }
+
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: {
@@ -214,8 +182,6 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
             businessName: true,
             businessDescription: true,
             isVerified: true,
-            
-            
           },
         },
         category: {
@@ -281,7 +247,7 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
 
     // Check if product is accessible
     const user = (req as AuthenticatedRequest).user;
-    if (!product.isActive && (!user || (user.role !== 'admin' && user.role !== 'super_admin' && product.vendorId !== user.id))) {
+    if (product.status !== 'active' && (!user || (user.role !== 'admin' && user.role !== 'super_admin' && product.vendorId !== user.id))) {
       res.status(404).json({
         success: false,
         message: 'Product not found',
@@ -293,43 +259,42 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Calculate average rating
-    const reviews = await prisma.review.findMany({
-      where: {
-        productId: product.id,
-        isApproved: true,
-      },
-      select: { rating: true },
-    });
-
-    const totalReviews = reviews.length;
+    // Calculate average rating from the already fetched reviews (fixing N+1 query)
+    const totalReviews = product.reviews?.length || 0;
     const averageRating = totalReviews > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+      ? (product.reviews?.reduce((sum: number, review: any) => sum + review.rating, 0) || 0) / totalReviews
       : 0;
 
-    // Get related products
-    const relatedProducts = await prisma.product.findMany({
-      where: {
-        categoryId: product.categoryId,
-        id: { not: product.id },
-        isActive: true,
-        
-      },
-      take: 6,
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        images: true,
-        vendor: {
-          select: {
-            businessName: true,
+    // Get related products with caching
+    const relatedProductsCacheKey = `related_products:${product.categoryId}:${productId}`;
+    let relatedProducts = await CacheService.get(relatedProductsCacheKey);
+
+    if (!relatedProducts) {
+      relatedProducts = await prisma.product.findMany({
+        where: {
+          categoryId: product.categoryId,
+          id: { not: product.id },
+          status: 'active',
+          isActive: true,
+        },
+        take: 6,
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          images: true,
+          vendor: {
+            select: {
+              businessName: true,
+            },
           },
         },
-      },
-    });
+      });
+      // Cache related products for 30 minutes
+      await CacheService.set(relatedProductsCacheKey, relatedProducts, 1800);
+    }
 
-    res.status(200).json({
+    const result = {
       success: true,
       data: {
         ...product,
@@ -339,7 +304,12 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
         totalWishlisted: product._count.wishlists,
         relatedProducts,
       },
-    });
+    };
+
+    // Cache the product for 30 minutes
+    await CacheService.cacheProduct(productId, result);
+
+    res.status(200).json(result);
   } catch (error) {
     console.error('Get product by ID error:', error);
     res.status(500).json({

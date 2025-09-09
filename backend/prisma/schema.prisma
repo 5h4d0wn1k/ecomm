@@ -3,71 +3,45 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-// Enums
-enum UserRole {
-  customer
-  vendor
-  admin
-}
-
-enum OrderStatus {
-  pending
-  confirmed
-  processing
-  shipped
-  delivered
-  cancelled
-  refunded
-}
-
-enum PaymentStatus {
-  pending
-  paid
-  failed
-  refunded
-}
-
-enum VendorEarningStatus {
-  pending
-  paid
-  cancelled
-}
-
-enum DiscountType {
-  percentage
-  fixed
-}
-
-enum ShippingConditionType {
-  weight
-  price
-  quantity
-}
+// SQLite compatible schema - using strings instead of enums and arrays
 
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  passwordHash  String
-  role          UserRole
-  firstName     String
-  lastName      String
-  phone         String?
-  isActive      Boolean  @default(true)
-  emailVerified Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  passwordHash      String
+  role              String   @default("customer")
+  firstName         String
+  lastName          String
+  phone             String?
+  isActive          Boolean  @default(true)
+  emailVerified     Boolean  @default(false)
+  emailVerificationToken String?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+  lastLogin         DateTime?
+  loginAttempts     Int      @default(0)
+  lockoutUntil      DateTime?
+  // TOTP 2FA fields
+  totpSecret        String?
+  totpEnabled       Boolean  @default(false)
+  totpBackupCodes   String?  // JSON string for SQLite compatibility
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
   vendor        Vendor?
+  cart          Cart?
   orders        Order[]
   reviews       Review[]
   wishlists     Wishlist[]
   sessions      Session[]
   notifications Notification[]
+  addresses     Address[]
+  logs          Log[]
 
   @@index([email])
   @@index([role])
@@ -83,7 +57,7 @@ model Vendor {
   businessAddress     String
   businessPhone       String?
   taxId               String?
-  bankAccountDetails  Json?
+  bankAccountDetails  String?            // JSON string for SQLite compatibility
   commissionRate      Decimal            @default(10.00)
   isVerified          Boolean            @default(false)
   createdAt           DateTime           @default(now())
@@ -94,6 +68,8 @@ model Vendor {
   products   Product[]
   orderItems OrderItem[]
   earnings   VendorEarning[]
+  coupons    Coupon[]
+  payouts    Payout[]
 
   @@index([userId])
   @@index([isVerified])
@@ -106,6 +82,8 @@ model Category {
   description String?
   parentId    Int?
   slug        String    @unique
+  path        String?   // Materialized path (e.g., "/electronics/smartphones")
+  level       Int       @default(0) // Depth level in hierarchy
   imageUrl    String?
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0)
@@ -116,10 +94,14 @@ model Category {
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
   products Product[]
+  logs     Log[]
 
   @@index([parentId])
   @@index([slug])
   @@index([isActive])
+  @@index([path])
+  @@index([level])
+  @@index([parentId, sortOrder])
   @@map("categories")
 }
 
@@ -137,10 +119,10 @@ model Product {
   stockQuantity    Int       @default(0)
   minStockLevel    Int       @default(0)
   weight           Decimal?
-  dimensions       Json?
-  images           Json?
-  tags             String[]
-  isActive         Boolean   @default(true)
+  dimensions       String?   // JSON string for SQLite compatibility
+  images           String?   // JSON string for SQLite compatibility
+  tags             String?   // JSON string for SQLite compatibility
+  status           String    @default("active")
   isFeatured       Boolean   @default(false)
   requiresShipping Boolean   @default(true)
   seoTitle         String?
@@ -152,16 +134,21 @@ model Product {
   vendor     Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   category   Category         @relation(fields: [categoryId], references: [id])
   variants   ProductVariant[]
+  cartItems  CartItem[]
   orderItems OrderItem[]
   reviews    Review[]
   wishlists  Wishlist[]
+  logs       Log[]
 
   @@index([vendorId])
   @@index([categoryId])
   @@index([sku])
-  @@index([isActive])
+  @@index([status])
   @@index([price])
   @@index([createdAt])
+  @@index([vendorId, status])
+  @@index([categoryId])
+  @@index([isFeatured])
   @@map("products")
 }
 
@@ -188,17 +175,17 @@ model Order {
   id              Int           @id @default(autoincrement())
   userId          Int
   orderNumber     String        @unique
-  status          OrderStatus   @default(pending)
+  status          String        @default("pending")
   subtotal        Decimal
   taxAmount       Decimal       @default(0)
   shippingAmount  Decimal       @default(0)
   discountAmount  Decimal       @default(0)
   totalAmount     Decimal
   currency        String        @default("USD")
-  shippingAddress Json
-  billingAddress  Json
+  shippingAddress String        // JSON string for SQLite compatibility
+  billingAddress  String        // JSON string for SQLite compatibility
   paymentMethod   String?
-  paymentStatus   PaymentStatus @default(pending)
+  paymentStatus   String        @default("pending")
   notes           String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -209,12 +196,15 @@ model Order {
   payments   Payment[]
   earnings   VendorEarning[]
   reviews    Review[]
+  shipment   Shipment?
 
   @@index([userId])
   @@index([orderNumber])
   @@index([status])
   @@index([paymentStatus])
   @@index([createdAt])
+  @@index([userId, status])
+  @@index([createdAt, status])
   @@map("orders")
 }
 
@@ -226,7 +216,7 @@ model OrderItem {
   quantity        Int
   unitPrice       Decimal
   totalPrice      Decimal
-  productSnapshot Json
+  productSnapshot String  // JSON string for SQLite compatibility
 
   // Relations
   order    Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -247,9 +237,9 @@ model Payment {
   currency        String        @default("USD")
   paymentMethod   String
   transactionId   String?       @unique
-  status          PaymentStatus @default(pending)
+  status          String        @default("pending")
   paymentGateway  String?
-  gatewayResponse Json?
+  gatewayResponse String?       // JSON string for SQLite compatibility
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -270,7 +260,7 @@ model VendorEarning {
   grossAmount      Decimal
   commissionAmount Decimal
   netAmount        Decimal
-  status           VendorEarningStatus @default(pending)
+  status           String             @default("pending")
   paidAt           DateTime?
   createdAt        DateTime           @default(now())
 
@@ -286,33 +276,42 @@ model VendorEarning {
 }
 
 model Coupon {
-  id                    Int          @id @default(autoincrement())
-  code                  String       @unique
+  id                    Int           @id @default(autoincrement())
+  code                  String        @unique
+  name                  String
   description           String?
-  discountType          DiscountType
+  discountType          String        @default("percentage") // 'percentage' or 'fixed'
   discountValue         Decimal
-  minimumOrderAmount    Decimal?
-  maximumDiscountAmount Decimal?
+  maxDiscountAmount     Decimal?
+  minOrderAmount        Decimal       @default(0.00)
   usageLimit            Int?
-  usageCount            Int          @default(0)
-  validFrom             DateTime
-  validUntil            DateTime
-  isActive              Boolean      @default(true)
-  applicableCategories  Int[]        @default([])
-  applicableProducts    Int[]        @default([])
+  usageCount            Int           @default(0)
+  perUserLimit          Int           @default(1)
+  applicableTo          String        @default("all") // 'all', 'categories', 'products'
+  vendorId              Int?
+  categoryIds           String?       // JSON string for SQLite compatibility
+  productIds            String?       // JSON string for SQLite compatibility
+  isActive              Boolean       @default(true)
+  startsAt              DateTime?
+  expiresAt             DateTime
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  // Relations
+  vendor                Vendor?       @relation(fields: [vendorId], references: [id])
 
   @@index([code])
   @@index([isActive])
-  @@index([validUntil])
+  @@index([expiresAt])
   @@map("coupons")
 }
 
 model ShippingZone {
   id        Int      @id @default(autoincrement())
   name      String
-  countries String[]
-  states    String[]
-  zipCodes  String[]
+  countries String   // JSON string for SQLite compatibility
+  states    String   // JSON string for SQLite compatibility
+  zipCodes  String   // JSON string for SQLite compatibility
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
@@ -326,7 +325,7 @@ model ShippingRate {
   id             Int                   @id @default(autoincrement())
   shippingZoneId Int
   name           String
-  conditionType  ShippingConditionType
+  conditionType  String                // 'weight', 'price', or 'quantity'
   minValue       Decimal?
   maxValue       Decimal?
   rate           Decimal
@@ -355,6 +354,7 @@ model Review {
 
   // Relations
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
@@ -364,6 +364,41 @@ model Review {
   @@index([rating])
   @@index([isApproved])
   @@map("reviews")
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+
+  @@index([userId])
+  @@map("carts")
+}
+
+model CartItem {
+  id            Int     @id @default(autoincrement())
+  cartId        Int
+  productId     Int
+  variantId     Int?
+  quantity      Int
+  unitPrice     Decimal
+  totalPrice    Decimal
+  productSnapshot String? // JSON string for SQLite compatibility
+
+  // Relations
+  cart    Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([cartId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("cart_items")
 }
 
 model Wishlist {
@@ -406,7 +441,7 @@ model Notification {
   type      String
   title     String
   message   String
-  data      Json?
+  data      String?  // JSON string for SQLite compatibility
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -417,4 +452,113 @@ model Notification {
   @@index([isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model Address {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  type        String   // 'billing' or 'shipping'
+  firstName   String
+  lastName    String
+  company     String?
+  address1    String
+  address2    String?
+  city        String
+  state       String
+  zipCode     String
+  country     String
+  phone       String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@map("addresses")
+}
+
+model Shipment {
+  id              Int      @id @default(autoincrement())
+  orderId         Int      @unique
+  trackingNumber  String?  @unique
+  carrier         String?  // 'shiprocket', 'fedex', 'dhl', etc.
+  serviceType     String?  // 'standard', 'express', 'overnight'
+  status          String   @default("pending") // 'pending', 'shipped', 'in_transit', 'delivered', 'failed'
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  estimatedDelivery DateTime?
+  weight          Decimal?
+  dimensions      String?  // JSON string for SQLite compatibility
+  shippingLabel   String?  // URL to shipping label
+  cost            Decimal  @default(0)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([trackingNumber])
+  @@index([status])
+  @@index([carrier])
+  @@map("shipments")
+}
+
+model Payout {
+  id              Int      @id @default(autoincrement())
+  vendorId        Int
+  amount          Decimal
+  currency        String   @default("USD")
+  status          String   @default("pending") // 'pending', 'processing', 'completed', 'failed', 'cancelled'
+  payoutMethod    String?  // 'bank_transfer', 'paypal', 'stripe'
+  referenceId     String?  @unique // External reference (bank transfer ID, PayPal transaction ID)
+  description     String?
+  processedAt     DateTime?
+  completedAt     DateTime?
+  failureReason   String?
+  metadata        String?  // JSON string for additional data
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([status])
+  @@index([payoutMethod])
+  @@index([referenceId])
+  @@map("payouts")
+}
+
+model Log {
+  id          Int      @id @default(autoincrement())
+  level       String   // 'error', 'warn', 'info', 'debug'
+  category    String   // 'auth', 'payment', 'order', 'system', 'user_action', etc.
+  message     String
+  userId      Int?
+  orderId     Int?
+  productId   Int?
+  vendorId    Int?
+  ipAddress   String?
+  userAgent   String?
+  metadata    String?  // JSON string for additional context
+  stackTrace  String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  order   Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  vendor  Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  @@index([level])
+  @@index([category])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([level, category])
+  @@map("logs")
 }

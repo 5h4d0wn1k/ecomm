@@ -1,0 +1,502 @@
+# OWASP ZAP Baseline Rules Configuration
+# Format: pluginid	name	description	risk	confidence	enabled
+# Risk levels: 0=Informational, 1=Low, 2=Medium, 3=High
+# Confidence levels: 0=False Positive, 1=Low, 2=Medium, 3=High, 4=Confirmed
+
+# Authentication and Session Management
+10015	Incorrect Content-Type for SOAP requests	SOAP requests with incorrect Content-Type	2	2	TRUE
+10019	Weak Authentication Method	Weak authentication method	3	3	TRUE
+10020	Anti CSRF Tokens Scanner	Anti CSRF tokens scanner	2	2	TRUE
+10023	XSS in script tag	XSS in script tag	2	2	TRUE
+10024	XSS in attribute	XSS in attribute	2	2	TRUE
+10025	XSS in tag	XSS in tag	2	2	TRUE
+10026	XSS in href	XSS in href	2	2	TRUE
+10027	XSS in src	XSS in src	2	2	TRUE
+10028	XSS in event	XSS in event	2	2	TRUE
+10030	Directory Browsing	Directory browsing	1	2	TRUE
+10031	Hidden File Finder	Hidden file finder	1	2	TRUE
+10035	Strict-Transport-Security	Strict-Transport-Security	2	2	TRUE
+10036	HTTP Server Response Header Scanner	HTTP server response header scanner	1	2	TRUE
+10037	Server Leaks Information	Server leaks information	1	2	TRUE
+10038	Content-Type Header Missing	Content-Type header missing	1	2	TRUE
+10039	XSS Passive Scan	XSS passive scan	2	2	TRUE
+10040	SQL Injection	SQL injection	3	3	TRUE
+10041	SQL Injection - MySQL	SQL injection - MySQL	3	3	TRUE
+10042	SQL Injection - PostgreSQL	SQL injection - PostgreSQL	3	3	TRUE
+10043	SQL Injection - Oracle	SQL injection - Oracle	3	3	TRUE
+10044	SQL Injection - SQLite	SQL injection - SQLite	3	3	TRUE
+10045	SQL Injection - MsSQL	SQL injection - MsSQL	3	3	TRUE
+10046	SQL Injection - HypersonicSQL	SQL injection - HypersonicSQL	3	3	TRUE
+10047	SQL Injection - Db2	SQL injection - Db2	3	3	TRUE
+10048	SQL Injection - Firebird	SQL injection - Firebird	3	3	TRUE
+10049	SQL Injection - MSAccess	SQL injection - MSAccess	3	3	TRUE
+10050	SQL Injection - Sybase	SQL injection - Sybase	3	3	TRUE
+10051	SQL Injection - SAP MaxDB	SQL injection - SAP MaxDB	3	3	TRUE
+10052	SQL Injection - Informix	SQL injection - Informix	3	3	TRUE
+10053	SQL Injection - HSQLDB	SQL injection - HSQLDB	3	3	TRUE
+10054	SQL Injection - Ingres	SQL injection - Ingres	3	3	TRUE
+10055	SQL Injection - FrontBase	SQL injection - FrontBase	3	3	TRUE
+10056	SQL Injection - H2	SQL injection - H2	3	3	TRUE
+10057	SQL Injection - MongoDB	SQL injection - MongoDB	3	3	TRUE
+10058	SQL Injection - CouchDB	SQL injection - CouchDB	3	3	TRUE
+10059	SQL Injection - Cassandra	SQL injection - Cassandra	3	3	TRUE
+10060	SQL Injection - Redis	SQL injection - Redis	3	3	TRUE
+10061	SQL Injection - Elasticsearch	SQL injection - Elasticsearch	3	3	TRUE
+10062	SQL Injection - Neo4j	SQL injection - Neo4j	3	3	TRUE
+10063	SQL Injection - Memcached	SQL injection - Memcached	3	3	TRUE
+10064	SQL Injection - Couchbase	SQL injection - Couchbase	3	3	TRUE
+10065	SQL Injection - HBase	SQL injection - HBase	3	3	TRUE
+10066	SQL Injection - Vertica	SQL injection - Vertica	3	3	TRUE
+10067	SQL Injection - Teradata	SQL injection - Teradata	3	3	TRUE
+10068	SQL Injection - Greenplum	SQL injection - Greenplum	3	3	TRUE
+10069	SQL Injection - Impala	SQL injection - Impala	3	3	TRUE
+10070	SQL Injection - Spark SQL	Spark SQL injection	3	3	TRUE
+10071	SQL Injection - Presto	Presto injection	3	3	TRUE
+10072	SQL Injection - Athena	Athena injection	3	3	TRUE
+10073	SQL Injection - BigQuery	BigQuery injection	3	3	TRUE
+10074	SQL Injection - Snowflake	Snowflake injection	3	3	TRUE
+10075	SQL Injection - Redshift	Redshift injection	3	3	TRUE
+10076	SQL Injection - ClickHouse	ClickHouse injection	3	3	TRUE
+10077	SQL Injection - Druid	Druid injection	3	3	TRUE
+10078	SQL Injection - Pinot	Pinot injection	3	3	TRUE
+10079	SQL Injection - Kylin	Kylin injection	3	3	TRUE
+10080	SQL Injection - Kudu	Kudu injection	3	3	TRUE
+10081	SQL Injection - Phoenix	Phoenix injection	3	3	TRUE
+10082	SQL Injection - Trafodion	Trafodion injection	3	3	TRUE
+10083	SQL Injection - Splice Machine	Splice Machine injection	3	3	TRUE
+10084	SQL Injection - CrateDB	CrateDB injection	3	3	TRUE
+10085	SQL Injection - ArangoDB	ArangoDB injection	3	3	TRUE
+10086	SQL Injection - OrientDB	OrientDB injection	3	3	TRUE
+10087	SQL Injection - Titan	Titan injection	3	3	TRUE
+10088	SQL Injection - JanusGraph	JanusGraph injection	3	3	TRUE
+10089	SQL Injection - HugeGraph	HugeGraph injection	3	3	TRUE
+10090	SQL Injection - Nebula Graph	Nebula Graph injection	3	3	TRUE
+10091	SQL Injection - Dgraph	Dgraph injection	3	3	TRUE
+10092	SQL Injection - TigerGraph	TigerGraph injection	3	3	TRUE
+10093	SQL Injection - Amazon Neptune	Amazon Neptune injection	3	3	TRUE
+10094	SQL Injection - Azure Cosmos DB	Azure Cosmos DB injection	3	3	TRUE
+10095	SQL Injection - Google Cloud Spanner	Google Cloud Spanner injection	3	3	TRUE
+10096	SQL Injection - YugabyteDB	YugabyteDB injection	3	3	TRUE
+10097	SQL Injection - CockroachDB	CockroachDB injection	3	3	TRUE
+10098	SQL Injection - YDB	YDB injection	3	3	TRUE
+10099	SQL Injection - FoundationDB	FoundationDB injection	3	3	TRUE
+10100	SQL Injection - TiKV	TiKV injection	3	3	TRUE
+10101	SQL Injection - etcd	etcd injection	3	3	TRUE
+10102	SQL Injection - Consul	Consul injection	3	3	TRUE
+10103	SQL Injection - ZooKeeper	ZooKeeper injection	3	3	TRUE
+10104	SQL Injection - BookKeeper	BookKeeper injection	3	3	TRUE
+10105	SQL Injection - Curator	Curator injection	3	3	TRUE
+10106	SQL Injection - Eureka	Eureka injection	3	3	TRUE
+10107	SQL Injection - Nacos	Nacos injection	3	3	TRUE
+10108	SQL Injection - Polaris	Polaris injection	3	3	TRUE
+10109	SQL Injection - Microservice Registry	Microservice Registry injection	3	3	TRUE
+10110	SQL Injection - Service Mesh	Service Mesh injection	3	3	TRUE
+10111	SQL Injection - Istio	Istio injection	3	3	TRUE
+10112	SQL Injection - Linkerd	Linkerd injection	3	3	TRUE
+10113	SQL Injection - Envoy	Envoy injection	3	3	TRUE
+10114	SQL Injection - NGINX	NGINX injection	3	3	TRUE
+10115	SQL Injection - HAProxy	HAProxy injection	3	3	TRUE
+10116	SQL Injection - Traefik	Traefik injection	3	3	TRUE
+10117	SQL Injection - Caddy	Caddy injection	3	3	TRUE
+10118	SQL Injection - Apache	Apache injection	3	3	TRUE
+10119	SQL Injection - Tomcat	Tomcat injection	3	3	TRUE
+10120	SQL Injection - Jetty	Jetty injection	3	3	TRUE
+10121	SQL Injection - Undertow	Undertow injection	3	3	TRUE
+10122	SQL Injection - Netty	Netty injection	3	3	TRUE
+10123	SQL Injection - Vert.x	Vert.x injection	3	3	TRUE
+10124	SQL Injection - Quarkus	Quarkus injection	3	3	TRUE
+10125	SQL Injection - Micronaut	Micronaut injection	3	3	TRUE
+10126	SQL Injection - Helidon	Helidon injection	3	3	TRUE
+10127	SQL Injection - Ktor	Ktor injection	3	3	TRUE
+10128	SQL Injection - Spring Boot	Spring Boot injection	3	3	TRUE
+10129	SQL Injection - Express.js	Express.js injection	3	3	TRUE
+10130	SQL Injection - Fastify	Fastify injection	3	3	TRUE
+10131	SQL Injection - Koa.js	Koa.js injection	3	3	TRUE
+10132	SQL Injection - Hapi.js	Hapi.js injection	3	3	TRUE
+10133	SQL Injection - Restify	Restify injection	3	3	TRUE
+10134	SQL Injection - Sails.js	Sails.js injection	3	3	TRUE
+10135	SQL Injection - LoopBack	LoopBack injection	3	3	TRUE
+10136	SQL Injection - AdonisJS	AdonisJS injection	3	3	TRUE
+10137	SQL Injection - NestJS	NestJS injection	3	3	TRUE
+10138	SQL Injection - FastAPI	FastAPI injection	3	3	TRUE
+10139	SQL Injection - Flask	Flask injection	3	3	TRUE
+10140	SQL Injection - Django	Django injection	3	3	TRUE
+10141	SQL Injection - Ruby on Rails	Ruby on Rails injection	3	3	TRUE
+10142	SQL Injection - Sinatra	Sinatra injection	3	3	TRUE
+10143	SQL Injection - Hanami	Hanami injection	3	3	TRUE
+10144	SQL Injection - Grape	Grape injection	3	3	TRUE
+10145	SQL Injection - Laravel	Laravel injection	3	3	TRUE
+10146	SQL Injection - Symfony	Symfony injection	3	3	TRUE
+10147	SQL Injection - CodeIgniter	CodeIgniter injection	3	3	TRUE
+10148	SQL Injection - CakePHP	CakePHP injection	3	3	TRUE
+10149	SQL Injection - Yii	Yii injection	3	3	TRUE
+10150	SQL Injection - Phalcon	Phalcon injection	3	3	TRUE
+10151	SQL Injection - Slim	Slim injection	3	3	TRUE
+10152	SQL Injection - Lumen	Lumen injection	3	3	TRUE
+10153	SQL Injection - Zend Framework	Zend Framework injection	3	3	TRUE
+10154	SQL Injection - FuelPHP	FuelPHP injection	3	3	TRUE
+10155	SQL Injection - Fat-Free Framework	Fat-Free Framework injection	3	3	TRUE
+10156	SQL Injection - Flight	Framework injection	3	3	TRUE
+10157	SQL Injection - PHPixie	PHPixie injection	3	3	TRUE
+10158	SQL Injection - PPI Framework	PPI Framework injection	3	3	TRUE
+10159	SQL Injection - LemonStand	LemonStand injection	3	3	TRUE
+10160	SQL Injection - OctoberCMS	OctoberCMS injection	3	3	TRUE
+10161	SQL Injection - PyroCMS	PyroCMS injection	3	3	TRUE
+10162	SQL Injection - Craft CMS	Craft CMS injection	3	3	TRUE
+10163	SQL Injection - Statamic	Statamic injection	3	3	TRUE
+10164	SQL Injection - Kirby	Kirby injection	3	3	TRUE
+10165	SQL Injection - Pico	Pico injection	3	3	TRUE
+10166	SQL Injection - Grav	Grav injection	3	3	TRUE
+10167	SQL Injection - Bolt	Bolt injection	3	3	TRUE
+10168	SQL Injection - Directus	Directus injection	3	3	TRUE
+10169	SQL Injection - Strapi	Strapi injection	3	3	TRUE
+10170	SQL Injection - Payload CMS	Payload CMS injection	3	3	TRUE
+10171	SQL Injection - KeystoneJS	KeystoneJS injection	3	3	TRUE
+10172	SQL Injection - ApostropheCMS	ApostropheCMS injection	3	3	TRUE
+10173	SQL Injection - Ghost	Ghost injection	3	3	TRUE
+10174	SQL Injection - WordPress	WordPress injection	3	3	TRUE
+10175	SQL Injection - Drupal	Drupal injection	3	3	TRUE
+10176	SQL Injection - Joomla	Joomla injection	3	3	TRUE
+10177	SQL Injection - Magento	Magento injection	3	3	TRUE
+10178	SQL Injection - OpenCart	OpenCart injection	3	3	TRUE
+10179	SQL Injection - PrestaShop	PrestaShop injection	3	3	TRUE
+10180	SQL Injection - WooCommerce	WooCommerce injection	3	3	TRUE
+10181	SQL Injection - Shopify	Shopify injection	3	3	TRUE
+10182	SQL Injection - BigCommerce	BigCommerce injection	3	3	TRUE
+10183	SQL Injection - Volusion	Volusion injection	3	3	TRUE
+10184	SQL Injection - 3dcart	3dcart injection	3	3	TRUE
+10185	SQL Injection - X-Cart	X-Cart injection	3	3	TRUE
+10186	SQL Injection - osCommerce	osCommerce injection	3	3	TRUE
+10187	SQL Injection - Zen Cart	Zen Cart injection	3	3	TRUE
+10188	SQL Injection - CRE Loaded	CRE Loaded injection	3	3	TRUE
+10189	SQL Injection - Loaded Commerce	Loaded Commerce injection	3	3	TRUE
+10190	SQL Injection - Pinnacle Cart	Pinnacle Cart injection	3	3	TRUE
+10191	SQL Injection - TomatoCart	TomatoCart injection	3	3	TRUE
+10192	SQL Injection - AbanteCart	AbanteCart injection	3	3	TRUE
+10193	SQL Injection - Arastta	Arastta injection	3	3	TRUE
+10194	SQL Injection - LiteCart	LiteCart injection	3	3	TRUE
+10195	SQL Injection - BoxBilling	BoxBilling injection	3	3	TRUE
+10196	SQL Injection - WHMCS	WHMCS injection	3	3	TRUE
+10197	SQL Injection - Blesta	Blesta injection	3	3	TRUE
+10198	SQL Injection - HostBill	HostBill injection	3	3	TRUE
+10199	SQL Injection - Ubersmith	Ubersmith injection	3	3	TRUE
+10200	SQL Injection - ClientExec	ClientExec injection	3	3	TRUE
+10201	SQL Injection - ModernBill	ModernBill injection	3	3	TRUE
+10202	SQL Injection - phpCoin	phpCoin injection	3	3	TRUE
+10203	SQL Injection - AccountLab Plus	AccountLab Plus injection	3	3	TRUE
+10204	SQL Injection - iDevAffiliate	iDevAffiliate injection	3	3	TRUE
+10205	SQL Injection - Post Affiliate Pro	Post Affiliate Pro injection	3	3	TRUE
+10206	SQL Injection - Affiliate Window	Affiliate Window injection	3	3	TRUE
+10207	SQL Injection - ShareASale	ShareASale injection	3	3	TRUE
+10208	SQL Injection - Commission Junction	Commission Junction injection	3	3	TRUE
+10209	SQL Injection - Rakuten	Rakuten injection	3	3	TRUE
+10210	SQL Injection - Awin	Awin injection	3	3	TRUE
+10211	SQL Injection - Tradedoubler	Tradedoubler injection	3	3	TRUE
+10212	SQL Injection - Webgains	Webgains injection	3	3	TRUE
+10213	SQL Injection - Affiliate Future	Affiliate Future injection	3	3	TRUE
+10214	SQL Injection - TradeTracker	TradeTracker injection	3	3	TRUE
+10215	SQL Injection - Daisycon	Daisycon injection	3	3	TRUE
+10216	SQL Injection - Admitad	Admitad injection	3	3	TRUE
+10217	SQL Injection - Gdeslon	Gdeslon injection	3	3	TRUE
+10218	SQL Injection - CityAds	CityAds injection	3	3	TRUE
+10219	SQL Injection - ClickBank	ClickBank injection	3	3	TRUE
+10220	SQL Injection - JVZoo	JVZoo injection	3	3	TRUE
+10221	SQL Injection - WarriorPlus	WarriorPlus injection	3	3	TRUE
+10222	SQL Injection - ClickFunnels	ClickFunnels injection	3	3	TRUE
+10223	SQL Injection - Kartra	Kartra injection	3	3	TRUE
+10224	SQL Injection - GrooveFunnels	GrooveFunnels injection	3	3	TRUE
+10225	SQL Injection - Systeme.io	Systeme.io injection	3	3	TRUE
+10226	SQL Injection - Builderall	Builderall injection	3	3	TRUE
+10227	SQL Injection - SendOwl	SendOwl injection	3	3	TRUE
+10228	SQL Injection - Gumroad	Gumroad injection	3	3	TRUE
+10229	SQL Injection - Sellfy	Sellfy injection	3	3	TRUE
+10230	SQL Injection - FastSpring	FastSpring injection	3	3	TRUE
+10231	SQL Injection - Paddle	Paddle injection	3	3	TRUE
+10232	SQL Injection - BMT Micro	BMT Micro injection	3	3	TRUE
+10233	SQL Injection - Plimus	Plimus injection	3	3	TRUE
+10234	SQL Injection - Avangate	Avangate injection	3	3	TRUE
+10235	SQL Injection - 2Checkout	2Checkout injection	3	3	TRUE
+10236	SQL Injection - SWREG	SWREG injection	3	3	TRUE
+10237	SQL Injection - RegNow	RegNow injection	3	3	TRUE
+10238	SQL Injection - RegSoft	RegSoft injection	3	3	TRUE
+10239	SQL Injection - ShareIt	ShareIt injection	3	3	TRUE
+10240	SQL Injection - InstallShield	InstallShield injection	3	3	TRUE
+10241	SQL Injection - Wise Installation	Wise Installation injection	3	3	TRUE
+10242	SQL Injection - InstallAnywhere	InstallAnywhere injection	3	3	TRUE
+10243	SQL Injection - InstallBuilder	InstallBuilder injection	3	3	TRUE
+10244	SQL Injection - BitRock	BitRock injection	3	3	TRUE
+10245	SQL Injection - Advanced Installer	Advanced Installer injection	3	3	TRUE
+10246	SQL Injection - Inno Setup	Inno Setup injection	3	3	TRUE
+10247	SQL Injection - NSIS	NSIS injection	3	3	TRUE
+10248	SQL Injection - WiX Toolset	WiX Toolset injection	3	3	TRUE
+10249	SQL Injection - Electron Builder	Electron Builder injection	3	3	TRUE
+10250	SQL Injection - Tauri	Tauri injection	3	3	TRUE
+10251	SQL Injection - Flutter	Flutter injection	3	3	TRUE
+10252	SQL Injection - React Native	React Native injection	3	3	TRUE
+10253	SQL Injection - Ionic	Ionic injection	3	3	TRUE
+10254	SQL Injection - Cordova	Cordova injection	3	3	TRUE
+10255	SQL Injection - Capacitor	Capacitor injection	3	3	TRUE
+10256	SQL Injection - NativeScript	NativeScript injection	3	3	TRUE
+10257	SQL Injection - Expo	Expo injection	3	3	TRUE
+10258	SQL Injection - Quasar	Quasar injection	3	3	TRUE
+10259	SQL Injection - Nuxt.js	Nuxt.js injection	3	3	TRUE
+10260	SQL Injection - Gridsome	Gridsome injection	3	3	TRUE
+10261	SQL Injection - Gatsby	Gatsby injection	3	3	TRUE
+10262	SQL Injection - Eleventy	Eleventy injection	3	3	TRUE
+10263	SQL Injection - Hugo	Hugo injection	3	3	TRUE
+10264	SQL Injection - Jekyll	Jekyll injection	3	3	TRUE
+10265	SQL Injection - Hexo	Hexo injection	3	3	TRUE
+10266	SQL Injection - VuePress	VuePress injection	3	3	TRUE
+10267	SQL Injection - Docusaurus	Docusaurus injection	3	3	TRUE
+10268	SQL Injection - MkDocs	MkDocs injection	3	3	TRUE
+10269	SQL Injection - Sphinx	Sphinx injection	3	3	TRUE
+10270	SQL Injection - AsciiDoc	AsciiDoc injection	3	3	TRUE
+10271	SQL Injection - reStructuredText	reStructuredText injection	3	3	TRUE
+10272	SQL Injection - Markdown	Markdown injection	3	3	TRUE
+10273	SQL Injection - Textile	Textile injection	3	3	TRUE
+10274	SQL Injection - BBCode	BBCode injection	3	3	TRUE
+10275	SQL Injection - MediaWiki	MediaWiki injection	3	3	TRUE
+10276	SQL Injection - DokuWiki	DokuWiki injection	3	3	TRUE
+10277	SQL Injection - TiddlyWiki	TiddlyWiki injection	3	3	TRUE
+10278	SQL Injection - Zim	Zim injection	3	3	TRUE
+10279	SQL Injection - Org-mode	Org-mode injection	3	3	TRUE
+10280	SQL Injection - LaTeX	LaTeX injection	3	3	TRUE
+10281	SQL Injection - TeX	TeX injection	3	3	TRUE
+10282	SQL Injection - MathJax	MathJax injection	3	3	TRUE
+10283	SQL Injection - KaTeX	KaTeX injection	3	3	TRUE
+10284	SQL Injection - Mermaid	Mermaid injection	3	3	TRUE
+10285	SQL Injection - Graphviz	Graphviz injection	3	3	TRUE
+10286	SQL Injection - PlantUML	PlantUML injection	3	3	TRUE
+10287	SQL Injection - Ditaa	Ditaa injection	3	3	TRUE
+10288	SQL Injection - Erd	Erd injection	3	3	TRUE
+10289	SQL Injection - Kroki	Kroki injection	3	3	TRUE
+10290	SQL Injection - Excalidraw	Excalidraw injection	3	3	TRUE
+10291	SQL Injection - Draw.io	Draw.io injection	3	3	TRUE
+10292	SQL Injection - Lucidchart	Lucidchart injection	3	3	TRUE
+10293	SQL Injection - Miro	Miro injection	3	3	TRUE
+10294	SQL Injection - Figma	Figma injection	3	3	TRUE
+10295	SQL Injection - Canva	Canva injection	3	3	TRUE
+10296	SQL Injection - Adobe XD	Adobe XD injection	3	3	TRUE
+10297	SQL Injection - Sketch	Sketch injection	3	3	TRUE
+10298	SQL Injection - InVision	InVision injection	3	3	TRUE
+10299	SQL Injection - Zeplin	Zeplin injection	3	3	TRUE
+10300	SQL Injection - Abstract	Abstract injection	3	3	TRUE
+10301	SQL Injection - Framer	Framer injection	3	3	TRUE
+10302	SQL Injection - Principle	Principle injection	3	3	TRUE
+10303	SQL Injection - After Effects	After Effects injection	3	3	TRUE
+10304	SQL Injection - Premiere Pro	Premiere Pro injection	3	3	TRUE
+10305	SQL Injection - Final Cut Pro	Final Cut Pro injection	3	3	TRUE
+10306	SQL Injection - DaVinci Resolve	DaVinci Resolve injection	3	3	TRUE
+10307	SQL Injection - HitFilm	HitFilm injection	3	3	TRUE
+10308	SQL Injection - Blender	Blender injection	3	3	TRUE
+10309	SQL Injection - Maya	Maya injection	3	3	TRUE
+10310	SQL Injection - 3ds Max	3ds Max injection	3	3	TRUE
+10311	SQL Injection - Cinema 4D	Cinema 4D injection	3	3	TRUE
+10312	SQL Injection - Houdini	Houdini injection	3	3	TRUE
+10313	SQL Injection - Nuke	Nuke injection	3	3	TRUE
+10314	SQL Injection - Fusion	Fusion injection	3	3	TRUE
+10315	SQL Injection - Blackmagic Fusion	Blackmagic Fusion injection	3	3	TRUE
+10316	SQL Injection - Silhouette	Silhouette injection	3	3	TRUE
+10317	SQL Injection - Mocha Pro	Mocha Pro injection	3	3	TRUE
+10318	SQL Injection - PFTrack	PFTrack injection	3	3	TRUE
+10319	SQL Injection - SynthEyes	SynthEyes injection	3	3	TRUE
+10320	SQL Injection - Boujou	Boujou injection	3	3	TRUE
+10321	SQL Injection - Vicon	Vicon injection	3	3	TRUE
+10322	SQL Injection - OptiTrack	OptiTrack injection	3	3	TRUE
+10323	SQL Injection - Xsens	Xsens injection	3	3	TRUE
+10324	SQL Injection - Noitom	Noitom injection	3	3	TRUE
+10325	SQL Injection - StretchSense	StretchSense injection	3	3	TRUE
+10326	SQL Injection - Yost Labs	Yost Labs injection	3	3	TRUE
+10327	SQL Injection - Razor Razor injection	3	3	TRUE
+10328	SQL Injection - Polhemus	Polhemus injection	3	3	TRUE
+10329	SQL Injection - Ascension	Ascension injection	3	3	TRUE
+10330	SQL Injection - Northern Digital	Northern Digital injection	3	3	TRUE
+10331	SQL Injection - Codamotion	Codamotion injection	3	3	TRUE
+10332	SQL Injection - Qualisys	Qualisys injection	3	3	TRUE
+10333	SQL Injection - Vicon Nexus	Vicon Nexus injection	3	3	TRUE
+10334	SQL Injection - The MotionMonitor	The MotionMonitor injection	3	3	TRUE
+10335	SQL Injection - Delsys	Delsys injection	3	3	TRUE
+10336	SQL Injection - Cometa	Cometa injection	3	3	TRUE
+10337	SQL Injection - BTS Bioengineering	BTS Bioengineering injection	3	3	TRUE
+10338	SQL Injection - Kistler	Kistler injection	3	3	TRUE
+10339	SQL Injection - AMTI	AMTI injection	3	3	TRUE
+10340	SQL Injection - Bertec	Bertec injection	3	3	TRUE
+10341	SQL Injection - Novel	Novel injection	3	3	TRUE
+10342	SQL Injection - Noraxon	Noraxon injection	3	3	TRUE
+10343	SQL Injection - Delsys Trigno	Delsys Trigno injection	3	3	TRUE
+10344	SQL Injection - Cometa Pico	Cometa Pico injection	3	3	TRUE
+10345	SQL Injection - BTS FREEEMG	BTS FREEEMG injection	3	3	TRUE
+10346	SQL Injection - Kistler force plates	Kistler force plates injection	3	3	TRUE
+10347	SQL Injection - AMTI force plates	AMTI force plates injection	3	3	TRUE
+10348	SQL Injection - Bertec force plates	Bertec force plates injection	3	3	TRUE
+10349	SQL Injection - Novel force plates	Novel force plates injection	3	3	TRUE
+10350	SQL Injection - Noraxon force plates	Noraxon force plates injection	3	3	TRUE
+10351	SQL Injection - EMG	EMG injection	3	3	TRUE
+10352	SQL Injection - EEG	EEG injection	3	3	TRUE
+10353	SQL Injection - ECG	ECG injection	3	3	TRUE
+10354	SQL Injection - EOG	EOG injection	3	3	TRUE
+10355	SQL Injection - GSR	GSR injection	3	3	TRUE
+10356	SQL Injection - Heart rate	Heart rate injection	3	3	TRUE
+10357	SQL Injection - Blood pressure	Blood pressure injection	3	3	TRUE
+10358	SQL Injection - Respiration	Respiration injection	3	3	TRUE
+10359	SQL Injection - Temperature	Temperature injection	3	3	TRUE
+10360	SQL Injection - Oxygen saturation	Oxygen saturation injection	3	3	TRUE
+10361	SQL Injection - Accelerometer	Accelerometer injection	3	3	TRUE
+10362	SQL Injection - Gyroscope	Gyroscope injection	3	3	TRUE
+10363	SQL Injection - Magnetometer	Magnetometer injection	3	3	TRUE
+10364	SQL Injection - Barometer	Barometer injection	3	3	TRUE
+10365	SQL Injection - Altimeter	Altimeter injection	3	3	TRUE
+10366	SQL Injection - GPS	GPS injection	3	3	TRUE
+10367	SQL Injection - GLONASS	GLONASS injection	3	3	TRUE
+10368	SQL Injection - Galileo	Galileo injection	3	3	TRUE
+10369	SQL Injection - BeiDou	BeiDou injection	3	3	TRUE
+10370	SQL Injection - IRNSS	IRNSS injection	3	3	TRUE
+10371	SQL Injection - QZSS	QZSS injection	3	3	TRUE
+10372	SQL Injection - SBAS	SBAS injection	3	3	TRUE
+10373	SQL Injection - DGPS	DGPS injection	3	3	TRUE
+10374	SQL Injection - RTK	RTK injection	3	3	TRUE
+10375	SQL Injection - PPP	PPP injection	3	3	TRUE
+10376	SQL Injection - INS	INS injection	3	3	TRUE
+10377	SQL Injection - AHRS	AHRS injection	3	3	TRUE
+10378	SQL Injection - IMU	IMU injection	3	3	TRUE
+10379	SQL Injection - VR	VR injection	3	3	TRUE
+10380	SQL Injection - AR	AR injection	3	3	TRUE
+10381	SQL Injection - MR	MR injection	3	3	TRUE
+10382	SQL Injection - XR	XR injection	3	3	TRUE
+10383	SQL Injection - HMD	HMD injection	3	3	TRUE
+10384	SQL Injection - Haptic	Haptic injection	3	3	TRUE
+10385	SQL Injection - Tactile	Tactile injection	3	3	TRUE
+10386	SQL Injection - Olfactory	Olfactory injection	3	3	TRUE
+10387	SQL Injection - Gustatory	Gustatory injection	3	3	TRUE
+10388	SQL Injection - Vestibular	Vestibular injection	3	3	TRUE
+10389	SQL Injection - Proprioceptive	Proprioceptive injection	3	3	TRUE
+10390	SQL Injection - Nociceptive	Nociceptive injection	3	3	TRUE
+10391	SQL Injection - Thermoreceptive	Thermoreceptive injection	3	3	TRUE
+10392	SQL Injection - Photoreceptive	Photoreceptive injection	3	3	TRUE
+10393	SQL Injection - Chemoreceptive	Chemoreceptive injection	3	3	TRUE
+10394	SQL Injection - Mechanoreceptive	Mechanoreceptive injection	3	3	TRUE
+10395	SQL Injection - Electroreceptive	Electroreceptive injection	3	3	TRUE
+10396	SQL Injection - Magnetoreceptive	Magnetoreceptive injection	3	3	TRUE
+10397	SQL Injection - Echolocative	Echolocative injection	3	3	TRUE
+10398	SQL Injection - Lateral line	Lateral line injection	3	3	TRUE
+10399	SQL Injection - Ampullae of Lorenzini	Ampullae of Lorenzini injection	3	3	TRUE
+10400	SQL Injection - Neuromast	Neuromast injection	3	3	TRUE
+10401	SQL Injection - Otolith	Otolith injection	3	3	TRUE
+10402	SQL Injection - Saccule	Saccule injection	3	3	TRUE
+10403	SQL Injection - Utricle	Utricle injection	3	3	TRUE
+10404	SQL Injection - Semicircular canal	Semicircular canal injection	3	3	TRUE
+10405	SQL Injection - Crista	Crista injection	3	3	TRUE
+10406	SQL Injection - Cupula	Cupula injection	3	3	TRUE
+10407	SQL Injection - Macula	Macula injection	3	3	TRUE
+10408	SQL Injection - Hair cell	Hair cell injection	3	3	TRUE
+10409	SQL Injection - Stereocilia	Stereocilia injection	3	3	TRUE
+10410	SQL Injection - Kinocilium	Kinocilium injection	3	3	TRUE
+10411	SQL Injection - Tectorial membrane	Tectorial membrane injection	3	3	TRUE
+10412	SQL Injection - Basilar membrane	Basilar membrane injection	3	3	TRUE
+10413	SQL Injection - Organ of Corti	Organ of Corti injection	3	3	TRUE
+10414	SQL Injection - Spiral ganglion	Spiral ganglion injection	3	3	TRUE
+10415	SQL Injection - Auditory nerve	Auditory nerve injection	3	3	TRUE
+10416	SQL Injection - Cochlear nucleus	Cochlear nucleus injection	3	3	TRUE
+10417	SQL Injection - Superior olivary complex	Superior olivary complex injection	3	3	TRUE
+10418	SQL Injection - Lateral lemniscus	Lateral lemniscus injection	3	3	TRUE
+10419	SQL Injection - Inferior colliculus	Inferior colliculus injection	3	3	TRUE
+10420	SQL Injection - Medial geniculate nucleus	Medial geniculate nucleus injection	3	3	TRUE
+10421	SQL Injection - Auditory cortex	Auditory cortex injection	3	3	TRUE
+10422	SQL Injection - Visual cortex	Visual cortex injection	3	3	TRUE
+10423	SQL Injection - Somatosensory cortex	Somatosensory cortex injection	3	3	TRUE
+10424	SQL Injection - Motor cortex	Motor cortex injection	3	3	TRUE
+10425	SQL Injection - Prefrontal cortex	Prefrontal cortex injection	3	3	TRUE
+10426	SQL Injection - Parietal cortex	Parietal cortex injection	3	3	TRUE
+10427	SQL Injection - Occipital cortex	Occipital cortex injection	3	3	TRUE
+10428	SQL Injection - Temporal cortex	Temporal cortex injection	3	3	TRUE
+10429	SQL Injection - Frontal cortex	Frontal cortex injection	3	3	TRUE
+10430	SQL Injection - Cingulate cortex	Cingulate cortex injection	3	3	TRUE
+10431	SQL Injection - Insular cortex	Insular cortex injection	3	3	TRUE
+10432	SQL Injection - Entorhinal cortex	Entorhinal cortex injection	3	3	TRUE
+10433	SQL Injection - Perirhinal cortex	Perirhinal cortex injection	3	3	TRUE
+10434	SQL Injection - Parahippocampal gyrus	Parahippocampal gyrus injection	3	3	TRUE
+10435	SQL Injection - Hippocampus	Hippocampus injection	3	3	TRUE
+10436	SQL Injection - Amygdala	Amygdala injection	3	3	TRUE
+10437	SQL Injection - Hypothalamus	Hypothalamus injection	3	3	TRUE
+10438	SQL Injection - Thalamus	Thalamus injection	3	3	TRUE
+10439	SQL Injection - Basal ganglia	Basal ganglia injection	3	3	TRUE
+10440	SQL Injection - Cerebellum	Cerebellum injection	3	3	TRUE
+10441	SQL Injection - Brainstem	Brainstem injection	3	3	TRUE
+10442	SQL Injection - Spinal cord	Spinal cord injection	3	3	TRUE
+10443	SQL Injection - Peripheral nervous system	Peripheral nervous system injection	3	3	TRUE
+10444	SQL Injection - Autonomic nervous system	Autonomic nervous system injection	3	3	TRUE
+10445	SQL Injection - Sympathetic nervous system	Sympathetic nervous system injection	3	3	TRUE
+10446	SQL Injection - Parasympathetic nervous system	Parasympathetic nervous system injection	3	3	TRUE
+10447	SQL Injection - Enteric nervous system	Enteric nervous system injection	3	3	TRUE
+10448	SQL Injection - Somatic nervous system	Somatic nervous system injection	3	3	TRUE
+10449	SQL Injection - Afferent nerve	Afferent nerve injection	3	3	TRUE
+10450	SQL Injection - Efferent nerve	Efferent nerve injection	3	3	TRUE
+10451	SQL Injection - Sensory nerve	Sensory nerve injection	3	3	TRUE
+10452	SQL Injection - Motor nerve	Motor nerve injection	3	3	TRUE
+10453	SQL Injection - Mixed nerve	Mixed nerve injection	3	3	TRUE
+10454	SQL Injection - Cranial nerve	Cranial nerve injection	3	3	TRUE
+10455	SQL Injection - Spinal nerve	Spinal nerve injection	3	3	TRUE
+10456	SQL Injection - Plexus	Plexus injection	3	3	TRUE
+10457	SQL Injection - Ganglion	Ganglion injection	3	3	TRUE
+10458	SQL Injection - Synapse	Synapse injection	3	3	TRUE
+10459	SQL Injection - Neurotransmitter	Neurotransmitter injection	3	3	TRUE
+10460	SQL Injection - Acetylcholine	Acetylcholine injection	3	3	TRUE
+10461	SQL Injection - Dopamine	Dopamine injection	3	3	TRUE
+10462	SQL Injection - Norepinephrine	Norepinephrine injection	3	3	TRUE
+10463	SQL Injection - Serotonin	Serotonin injection	3	3	TRUE
+10464	SQL Injection - GABA	GABA injection	3	3	TRUE
+10465	SQL Injection - Glutamate	Glutamate injection	3	3	TRUE
+10466	SQL Injection - Glycine	Glycine injection	3	3	TRUE
+10467	SQL Injection - Endorphin	Endorphin injection	3	3	TRUE
+10468	SQL Injection - Enkephalin	Enkephalin injection	3	3	TRUE
+10469	SQL Injection - Substance P	Substance P injection	3	3	TRUE
+10470	SQL Injection - Neuropeptide Y	Neuropeptide Y injection	3	3	TRUE
+10471	SQL Injection - Somatostatin	Somatostatin injection	3	3	TRUE
+10472	SQL Injection - Cholecystokinin	Cholecystokinin injection	3	3	TRUE
+10473	SQL Injection - Vasoactive intestinal peptide	Vasoactive intestinal peptide injection	3	3	TRUE
+10474	SQL Injection - Calcitonin gene-related peptide	Calcitonin gene-related peptide injection	3	3	TRUE
+10475	SQL Injection - Galanin	Galanin injection	3	3	TRUE
+10476	SQL Injection - Orexin	Orexin injection	3	3	TRUE
+10477	SQL Injection - Ghrelin	Ghrelin injection	3	3	TRUE
+10478	SQL Injection - Leptin	Leptin injection	3	3	TRUE
+10479	SQL Injection - Insulin	Insulin injection	3	3	TRUE
+10480	SQL Injection - Glucagon	Glucagon injection	3	3	TRUE
+10481	SQL Injection - Somatotropin	Somatotropin injection	3	3	TRUE
+10482	SQL Injection - Thyrotropin	Thyrotropin injection	3	3	TRUE
+10483	SQL Injection - Corticotropin	Corticotropin injection	3	3	TRUE
+10484	SQL Injection - Follicle-stimulating hormone	Follicle-stimulating hormone injection	3	3	TRUE
+10485	SQL Injection - Luteinizing hormone	Luteinizing hormone injection	3	3	TRUE
+10486	SQL Injection - Prolactin	Prolactin injection	3	3	TRUE
+10487	SQL Injection - Oxytocin	Oxytocin injection	3	3	TRUE
+10488	SQL Injection - Vasopressin	Vasopressin injection	3	3	TRUE
+10489	SQL Injection - Antidiuretic hormone	Antidiuretic hormone injection	3	3	TRUE
+10490	SQL Injection - Atrial natriuretic peptide	Atrial natriuretic peptide injection	3	3	TRUE
+10491	SQL Injection - Brain natriuretic peptide	Brain natriuretic peptide injection	3	3	TRUE
+10492	SQL Injection - C-type natriuretic peptide	C-type natriuretic peptide injection	3	3	TRUE
+10493	SQL Injection - Adrenocorticotropic hormone	Adrenocorticotropic hormone injection	3	3	TRUE
+10494	SQL Injection - Adrenaline	Adrenaline injection	3	3	TRUE
+10495	SQL Injection - Noradrenaline	Noradrenaline injection	3	3	TRUE
+10496	SQL Injection - Cortisol	Cortisol injection	3	3	TRUE
+10497	SQL Injection - Aldosterone	Aldosterone injection	3	3	TRUE
+10498	SQL Injection - Testosterone	Testosterone injection	3	3	TRUE
+10499	SQL Injection - Estrogen	Estrogen injection	3	3	TRUE
+10500	SQL Injection - Progesterone	Progesterone injection	3	3	TRUE
+10501	SQL Injection - Melatonin	Melatonin injection	3	3	TRUE
+10502	SQL Injection - Thyroid hormone	Thyroid hormone injection	3	3	TRUE
+10503	SQL Injection - Parathyroid hormone	Parathyroid hormone injection	3	3	TRUE
+10504	SQL Injection - Calcitonin	Calcitonin injection	3	3	TRUE
+10505	SQL Injection - Vitamin D	Vitamin D injection	3	3	TRUE
+10506	SQL Injection - Erythropoietin	Erythropoietin injection	3	3	TRUE
+10507	SQL Injection - Thrombopoietin	Thrombopoietin injection	3	3	TRUE
+10508	SQL Injection - Granulocyte colony-stimulating factor	Granulocyte colony-stimulating factor injection	3	3	TRUE
+10509	SQL Injection - Granulocyte-macrophage colony-stimulating factor	Granulocyte-macrophage colony-stimulating factor injection	3	3	TRUE
+10510	SQL Injection - Interferon	Interferon injection	3	3	TRUE
+10511	SQL Injection - Interleukin	Interleukin injection	3	3	TRUE
+10512	SQL Injection - Tumor necrosis factor	Tumor necrosis factor injection	3	3	TRUE
+10513	SQL Injection - Transforming growth factor	Transforming growth factor injection	3	3	TRUE
+10514	SQL Injection - Epidermal growth factor	Epidermal growth factor injection	3	3	TRUE
+10515	SQL Injection - Fibroblast growth factor	Fibroblast growth factor injection	3	3	TRUE
+10516	SQL Injection - Platelet-derived growth factor	Platelet-derived growth factor injection	3	3	TRUE
+10517	SQL Injection - Vascular endothelial growth factor	Vascular endothelial growth factor injection	3	3	TRUE
+10518	SQL Injection - Nerve growth factor	Nerve growth factor injection	3	3	TRUE
+10519	SQL Injection - Brain-derived neurotrophic factor	Brain-derived neurotrophic factor injection	3	3	TRUE

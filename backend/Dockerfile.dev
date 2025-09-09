@@ -1,8 +1,8 @@
 # Development Dockerfile with hot reloading
 FROM node:18-alpine
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init and OpenSSL for proper signal handling and Prisma
+RUN apk add --no-cache dumb-init openssl
 
 # Set working directory
 WORKDIR /app
@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including dev dependencies)
-RUN npm ci
+RUN npm install
 
 # Copy Prisma schema
 COPY prisma ./prisma/

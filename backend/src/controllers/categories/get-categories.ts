@@ -154,13 +154,13 @@ export const getCategoryById = async (req: Request, res: Response): Promise<void
             isActive: true,
             sortOrder: true,
             _count: {
-              select: { products: { where: { isActive: true } } },
+              select: { products: { where: { status: 'active' } } },
             },
           },
           orderBy: { sortOrder: 'asc' },
         },
         products: {
-          where: { isActive: true },
+          where: { status: 'active' },
           select: {
             id: true,
             name: true,
@@ -183,7 +183,7 @@ export const getCategoryById = async (req: Request, res: Response): Promise<void
         },
         _count: {
           select: {
-            products: { where: { isActive: true } },
+            products: { where: { status: 'active' } },
           },
         },
       },
@@ -230,7 +230,7 @@ export const getCategoryTree = async (req: Request, res: Response): Promise<void
         parentId: true,
         sortOrder: true,
         _count: {
-          select: { products: { where: { isActive: true } } },
+          select: { products: { where: { status: 'active' } } },
         },
       },
       orderBy: { sortOrder: 'asc' },

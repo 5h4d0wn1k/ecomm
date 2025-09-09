@@ -18,7 +18,6 @@ export class UserModel {
             id: true,
             businessName: true,
             isVerified: true,
-            status: true,
           },
         },
       },
@@ -82,7 +81,7 @@ export class ProductModel {
           _count: {
             select: {
               reviews: true,
-              wishlist: true,
+              wishlists: true,
             },
           },
         },
@@ -223,7 +222,7 @@ export class VendorModel {
         where: { vendorId },
       }),
       prisma.vendorEarning.aggregate({
-        where: { vendorId, status: { in: ['available', 'paid'] } },
+        where: { vendorId, status: { in: ['paid'] } },
         _sum: { netAmount: true },
       }),
       prisma.orderItem.count({

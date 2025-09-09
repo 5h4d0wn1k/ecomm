@@ -37,7 +37,14 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     const resetToken = generatePasswordResetToken();
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    // Password reset token storage removed - not supported in current schema
+    // Store reset token in database
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetTokenExpiry,
+      },
+    });
 
     // Send password reset email
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password?token=${resetToken}`;

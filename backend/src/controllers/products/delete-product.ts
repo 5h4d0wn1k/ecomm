@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../../config';
 import { AuthenticatedRequest } from '../../middlewares/auth';
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../../utils/audit';
+import { CacheService } from '../../services/cache.service';
 
 export const deleteProduct = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -177,6 +178,9 @@ export const deleteProduct = async (req: AuthenticatedRequest, res: Response): P
       });
     }
 
+    // Invalidate product cache
+    await CacheService.invalidateProductCache(productId);
+
     res.status(200).json({
       success: true,
       message: 'Product deleted successfully',
@@ -287,7 +291,7 @@ export const archiveProduct = async (req: AuthenticatedRequest, res: Response): 
     const archivedProduct = await prisma.product.update({
       where: { id: productId },
       data: {
-        isActive: false,
+        status: 'archived',
       },
       include: {
         vendor: {
@@ -326,6 +330,9 @@ export const archiveProduct = async (req: AuthenticatedRequest, res: Response): 
         userAgent: req.get('User-Agent'),
       });
     }
+
+    // Invalidate product cache
+    await CacheService.invalidateProductCache(productId);
 
     res.status(200).json({
       success: true,

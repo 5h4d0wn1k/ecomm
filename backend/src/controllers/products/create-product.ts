@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../../config';
 import { AuthenticatedRequest } from '../../middlewares';
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../../utils/audit';
+import { CacheService } from '../../services/cache.service';
 
 /**
  * Create a new product
@@ -169,7 +170,7 @@ export const createProduct = async (req: AuthenticatedRequest, res: Response): P
         dimensions,
         images,
         tags,
-        isActive,
+        status,
         isFeatured,
         requiresShipping,
         seoTitle,
@@ -206,6 +207,9 @@ export const createProduct = async (req: AuthenticatedRequest, res: Response): P
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
     });
+
+    // Invalidate product cache
+    await CacheService.invalidateProductCache();
 
     res.status(201).json({
       success: true,

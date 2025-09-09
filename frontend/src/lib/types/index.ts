@@ -5,6 +5,7 @@ export interface User {
   firstName: string
   lastName: string
   phone?: string
+  avatar?: string
   role: 'customer' | 'vendor' | 'admin' | 'super_admin'
   isActive: boolean
   emailVerified: boolean
@@ -46,7 +47,7 @@ export interface Product {
   stockQuantity: number
   minStockLevel: number
   weight?: number
-  dimensions?: Record<string, any>
+  dimensions?: Record<string, number>
   images: string[]
   tags: string[]
   status: 'draft' | 'active' | 'archived'
@@ -61,6 +62,15 @@ export interface Product {
   category: Category
   variants?: ProductVariant[]
   reviews?: Review[]
+  // Additional properties for compare functionality
+  specifications?: Record<string, string>
+  features?: string[]
+  rating?: number
+  reviewCount?: number
+  originalPrice?: number
+  inStock?: boolean
+  brand?: string
+  image?: string // Convenience property, maps to images[0]
 }
 
 export interface ProductVariant {
@@ -105,8 +115,8 @@ export interface Order {
   discountAmount: number
   totalAmount: number
   currency: string
-  shippingAddress: Record<string, any>
-  billingAddress: Record<string, any>
+  shippingAddress: Record<string, string | number>
+  billingAddress: Record<string, string | number>
   paymentMethod?: string
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
   notes?: string
@@ -128,7 +138,7 @@ export interface OrderItem {
   quantity: number
   unitPrice: number
   totalPrice: number
-  productSnapshot: Record<string, any>
+  productSnapshot: Record<string, string | number | boolean>
   product: Product
   vendor: Vendor
 }
@@ -143,7 +153,7 @@ export interface Payment {
   transactionId?: string
   paymentMethod: string
   paymentGateway?: string
-  gatewayResponse?: Record<string, any>
+  gatewayResponse?: Record<string, string | number | boolean>
   createdAt: string
   updatedAt: string
 }
@@ -185,7 +195,7 @@ export interface Cart {
 }
 
 // API Response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   message?: string
@@ -198,6 +208,13 @@ export interface ApiResponse<T = any> {
     hasNext: boolean
     hasPrev: boolean
   }
+}
+
+// Auth response types
+export interface LoginResponse {
+  user: User
+  token: string
+  refreshToken: string
 }
 
 // Form types
@@ -243,8 +260,9 @@ export interface ProductFilters {
   minPrice?: number
   maxPrice?: number
   search?: string
-  sort?: 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'popular'
+  sort?: 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'popular' | 'created_desc' | 'name_asc' | 'name_desc' | 'rating_desc' | 'discount_desc'
   inStock?: boolean
+  rating?: number
 }
 
 // Pagination types

@@ -9,6 +9,11 @@ import {
   updateUserRole,
   deactivateUser,
   reactivateUser,
+  getAllProducts,
+  getPendingProducts,
+  approveProduct,
+  rejectProduct,
+  updateProductStatus,
 } from '../controllers/admin';
 
 const router = Router();
@@ -28,5 +33,12 @@ router.get('/users', getAllUsers);
 router.put('/users/:userId/role', updateUserRole);
 router.put('/users/:userId/deactivate', deactivateUser);
 router.put('/users/:userId/reactivate', reactivateUser);
+
+// Product management routes
+router.get('/products', getAllProducts);
+router.get('/products/pending', getPendingProducts);
+router.put('/products/:productId/approve', approveProduct);
+router.put('/products/:productId/reject', rejectProduct);
+router.put('/products/:productId/status', updateProductStatus);
 
 export default router;

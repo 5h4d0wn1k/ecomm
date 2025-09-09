@@ -8,15 +8,15 @@ services:
     env_file:
       - .env.production
     environment:
-      POSTGRES_DB: ecommerce_prod
-      POSTGRES_USER: postgres
+      POSTGRES_DB: davcreationsdb
+      POSTGRES_USER: davcreationsuser
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce_prod"]
+      test: ["CMD-SHELL", "pg_isready -U davcreationsuser -d davcreationsdb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,7 +59,7 @@ services:
     env_file:
       - .env.production
     environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/ecommerce_prod
+      - DATABASE_URL=postgresql://davcreationsuser:${POSTGRES_PASSWORD}@postgres:5432/davcreationsdb
       - REDIS_URL=redis://redis:6379
     depends_on:
       postgres:

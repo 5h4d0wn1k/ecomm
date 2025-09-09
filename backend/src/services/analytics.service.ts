@@ -175,7 +175,7 @@ export class AnalyticsService {
 
       // Cache the result
       if (redisClient.isOpen) {
-        await redisClient.setex(cacheKey, this.CACHE_TTL, JSON.stringify(stats));
+        await redisClient.setEx(cacheKey, this.CACHE_TTL, JSON.stringify(stats));
       }
 
       return stats;
@@ -229,7 +229,7 @@ export class AnalyticsService {
           _sum: { netAmount: true },
           where: {
             vendorId,
-            status: { in: ['available', 'paid'] },
+            status: { in: ['pending', 'paid'] },
           },
         }),
 
@@ -255,7 +255,7 @@ export class AnalyticsService {
           _sum: { netAmount: true },
           where: {
             vendorId,
-            status: { in: ['available', 'paid'] },
+            status: { in: ['pending', 'paid'] },
             createdAt: { gte: firstDayOfMonth },
           },
         }),
@@ -323,7 +323,7 @@ export class AnalyticsService {
 
       // Cache the result
       if (redisClient.isOpen) {
-        await redisClient.setex(cacheKey, this.CACHE_TTL, JSON.stringify(stats));
+        await redisClient.setEx(cacheKey, this.CACHE_TTL, JSON.stringify(stats));
       }
 
       return stats;
@@ -365,7 +365,7 @@ export class AnalyticsService {
           orderItems: vendorId ? {
             where: { vendorId },
             select: { totalPrice: true },
-          } : undefined,
+          } : false,
         },
       });
 
@@ -378,19 +378,21 @@ export class AnalyticsService {
 
         switch (period) {
           case 'daily':
-            key = date.toISOString().split('T')[0];
+            key = date.toISOString().split('T')[0]!;
             break;
           case 'weekly':
             const weekStart = new Date(date);
             weekStart.setDate(date.getDate() - date.getDay());
-            key = weekStart.toISOString().split('T')[0];
+            key = weekStart.toISOString().split('T')[0]!;
             break;
           case 'monthly':
             key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             break;
           case 'yearly':
-            key = date.getFullYear().toString();
+            key = String(date.getFullYear());
             break;
+          default:
+            key = date.toISOString().split('T')[0]!; // fallback to daily
         }
 
         const existing = groupedData.get(key) || { revenue: 0, orders: 0 };

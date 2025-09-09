@@ -5,6 +5,7 @@ import {
   createProduct,
   getProducts,
   getProductById,
+  getSearchSuggestions,
   updateProduct,
   deleteProduct,
   archiveProduct,
@@ -56,6 +57,7 @@ const updateProductRules = [
 
 // Public routes (no authentication required)
 router.get('/', getProducts);
+router.get('/search/suggestions', getSearchSuggestions);
 router.get('/:id', getProductById);
 
 // Protected routes (authentication required)

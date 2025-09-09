@@ -77,6 +77,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       data: {
         userId: user.id,
         sessionToken: accessToken,
+        refreshToken: refreshToken,
         ipAddress: req.ip || null,
         userAgent: req.get('User-Agent') || null,
         expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes

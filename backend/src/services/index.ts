@@ -3,11 +3,12 @@ export { EmailService } from './email.service';
 export { FileUploadService } from './file-upload.service';
 export { NotificationService } from './notification.service';
 export { AnalyticsService } from './analytics.service';
+export { ShippingService } from './shipping.service';
 
 // Export types
 export type {
-  CreatePaymentIntentData,
-  PaymentIntentResult,
+  CreateOrderData,
+  OrderResult,
   RefundData,
 } from './payment.service';
 

@@ -8,8 +8,8 @@ export const updateVariant = async (req: AuthenticatedRequest, res: Response): P
     const { productId, variantId } = req.params;
     const { name, value, skuSuffix, priceModifier, stockQuantity, isActive, sortOrder } = req.body;
 
-    const productIdNum = parseInt(productId, 10);
-    const variantIdNum = parseInt(variantId, 10);
+    const productIdNum = parseInt(productId || '0', 10);
+    const variantIdNum = parseInt(variantId || '0', 10);
 
     if (isNaN(productIdNum) || isNaN(variantIdNum)) {
       res.status(400).json({
@@ -36,7 +36,7 @@ export const updateVariant = async (req: AuthenticatedRequest, res: Response): P
               select: {
                 id: true,
                 userId: true,
-                status: true,
+                isVerified: true,
               },
             },
           },
@@ -58,7 +58,7 @@ export const updateVariant = async (req: AuthenticatedRequest, res: Response): P
 
     // Check permissions
     const isOwner = req.user?.role === 'admin' ||
-      (req.user?.role === 'vendor' && variant.product.vendor.userId === req.user.id);
+      (req.user?.role === 'vendor' && variant.product.vendor?.userId === req.user.id);
 
     if (!isOwner) {
       res.status(403).json({
@@ -73,7 +73,7 @@ export const updateVariant = async (req: AuthenticatedRequest, res: Response): P
     }
 
     // If vendor, check if their account is approved
-    if (req.user.role === 'vendor' && variant.product.vendor.status !== 'approved') {
+    if (req.user?.role === 'vendor' && variant.product.vendor?.isVerified !== true) {
       res.status(403).json({
         success: false,
         message: 'Vendor account not approved',
@@ -104,7 +104,7 @@ export const updateVariant = async (req: AuthenticatedRequest, res: Response): P
 
     // Audit log
     await logAuditEvent({
-      userId: req.user.id,
+      userId: req.user?.id || 0,
       action: AUDIT_ACTIONS.PRODUCT_UPDATED,
       resource: AUDIT_RESOURCES.PRODUCT,
       resourceId: productIdNum.toString(),
@@ -140,7 +140,7 @@ export const getProductVariants = async (req: AuthenticatedRequest, res: Respons
     const { productId } = req.params;
     const { includeInactive = 'false' } = req.query;
 
-    const productIdNum = parseInt(productId, 10);
+    const productIdNum = parseInt(productId || '0', 10);
     if (isNaN(productIdNum)) {
       res.status(400).json({
         success: false,

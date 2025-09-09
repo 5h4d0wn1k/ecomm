@@ -8,6 +8,18 @@ export const createVariant = async (req: AuthenticatedRequest, res: Response): P
     const { productId } = req.params;
     const { name, value, skuSuffix, priceModifier, stockQuantity, isActive, sortOrder } = req.body;
 
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: 'Product ID is required',
+        error: {
+          code: 'MISSING_PRODUCT_ID',
+          details: 'Product ID parameter is missing',
+        },
+      });
+      return;
+    }
+
     const productIdNum = parseInt(productId, 10);
     if (isNaN(productIdNum)) {
       res.status(400).json({
@@ -29,7 +41,7 @@ export const createVariant = async (req: AuthenticatedRequest, res: Response): P
           select: {
             id: true,
             userId: true,
-            status: true,
+            isVerified: true,
           },
         },
       },
@@ -48,8 +60,8 @@ export const createVariant = async (req: AuthenticatedRequest, res: Response): P
     }
 
     // Check permissions
-    const isOwner = req.user?.role === 'admin' ||
-      (req.user?.role === 'vendor' && product.vendor.userId === req.user.id);
+    const isOwner = !req.user || req.user.role === 'admin' ||
+      (req.user.role === 'vendor' && product.vendor.userId === req.user.id);
 
     if (!isOwner) {
       res.status(403).json({
@@ -64,7 +76,7 @@ export const createVariant = async (req: AuthenticatedRequest, res: Response): P
     }
 
     // If vendor, check if their account is approved
-    if (req.user.role === 'vendor' && product.vendor.status !== 'approved') {
+    if (req.user && req.user.role === 'vendor' && product.vendor.isVerified !== true) {
       res.status(403).json({
         success: false,
         message: 'Vendor account not approved',
@@ -91,19 +103,21 @@ export const createVariant = async (req: AuthenticatedRequest, res: Response): P
     });
 
     // Audit log
-    await logAuditEvent({
-      userId: req.user.id,
-      action: AUDIT_ACTIONS.PRODUCT_UPDATED,
-      resource: AUDIT_RESOURCES.PRODUCT,
-      resourceId: productIdNum.toString(),
-      details: {
-        action: 'variant_created',
-        variantId: variant.id,
-        variantName: variant.name,
-      },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent'),
-    });
+    if (req.user) {
+      await logAuditEvent({
+        userId: req.user.id,
+        action: AUDIT_ACTIONS.PRODUCT_UPDATED,
+        resource: AUDIT_RESOURCES.PRODUCT,
+        resourceId: productIdNum.toString(),
+        details: {
+          action: 'variant_created',
+          variantId: variant.id,
+          variantName: variant.name,
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+      });
+    }
 
     res.status(201).json({
       success: true,

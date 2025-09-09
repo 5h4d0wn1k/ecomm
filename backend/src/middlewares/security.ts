@@ -311,7 +311,7 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
   return (req: Request, res: Response, next: NextFunction): void => {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
       const contentType = req.headers['content-type']?.split(';')[0];
-      
+
       if (!contentType || !allowedTypes.includes(contentType)) {
         res.status(415).json({
           success: false,
@@ -328,3 +328,57 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
     next();
   };
 };
+
+/**
+ * PCI DSS compliant payment security middleware
+ */
+export const paymentSecurity = (req: Request, res: Response, next: NextFunction): void => {
+  // Ensure HTTPS in production
+  if (process.env.NODE_ENV === 'production' && req.protocol !== 'https') {
+    res.status(403).json({
+      success: false,
+      message: 'HTTPS required',
+      error: {
+        code: 'HTTPS_REQUIRED',
+        details: 'Payment endpoints must use HTTPS',
+      },
+    });
+    return;
+  }
+
+  // Validate payment data is not logged
+  const sensitiveFields = ['cardNumber', 'cvv', 'expiryDate', 'paymentToken'];
+  const hasSensitiveData = sensitiveFields.some(field =>
+    req.body && (req.body[field] || req.query[field] || req.params[field])
+  );
+
+  if (hasSensitiveData) {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid payment data',
+      error: {
+        code: 'INVALID_PAYMENT_DATA',
+        details: 'Sensitive payment data should not be sent directly',
+      },
+    });
+    return;
+  }
+
+  // Add security headers specific to payments
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  next();
+};
+
+/**
+ * Payment rate limiting (stricter than general rate limiting)
+ */
+export const paymentRateLimit = advancedRateLimit({
+  maxRequests: 10, // 10 payment attempts per minute
+  windowMs: 60 * 1000,
+  skipSuccessfulRequests: true, // Allow more failed attempts
+  skipFailedRequests: false,
+});

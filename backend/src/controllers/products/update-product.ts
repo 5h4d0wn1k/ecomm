@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../../config';
 import { AuthenticatedRequest } from '../../middlewares';
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES } from '../../utils/audit';
+import { CacheService } from '../../services/cache.service';
 
 /**
  * Update a product
@@ -198,6 +199,9 @@ export const updateProduct = async (req: AuthenticatedRequest, res: Response): P
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
     });
+
+    // Invalidate product cache
+    await CacheService.invalidateProductCache(productId);
 
     res.status(200).json({
       success: true,

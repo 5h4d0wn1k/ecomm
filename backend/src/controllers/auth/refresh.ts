@@ -42,6 +42,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
         email: true,
         role: true,
         isActive: true,
+        lockoutUntil: true,
       },
     });
 
@@ -69,6 +70,39 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if account is locked
+    if (user.lockoutUntil && user.lockoutUntil > new Date()) {
+      res.status(423).json({
+        success: false,
+        message: 'Account is temporarily locked',
+        error: {
+          code: 'ACCOUNT_LOCKED',
+          details: 'Cannot refresh token for locked account',
+        },
+      });
+      return;
+    }
+
+    // Verify refresh token exists in sessions
+    const session = await prisma.session.findFirst({
+      where: {
+        userId: user.id,
+        refreshToken: refreshToken,
+      },
+    });
+
+    if (!session) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token',
+        error: {
+          code: 'INVALID_REFRESH_TOKEN',
+          details: 'Refresh token not found in active sessions',
+        },
+      });
+      return;
+    }
+
     // Generate new access token
     const newAccessToken = generateAccessToken({
       userId: user.id,
@@ -76,14 +110,15 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
       email: user.email,
     });
 
-    // Update session with new token
+    // Update session with new tokens
     await prisma.session.updateMany({
       where: {
         userId: user.id,
-        sessionToken: refreshToken,
+        refreshToken: refreshToken,
       },
       data: {
         sessionToken: newAccessToken,
+        refreshToken: refreshToken, // Keep same refresh token
         expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
       },
     });

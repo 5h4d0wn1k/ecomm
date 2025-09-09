@@ -76,8 +76,8 @@ export class NotificationService {
         type: bulkData.type,
         title: bulkData.title,
         message: bulkData.message,
-        data: bulkData.data || null,
-      }));
+        ...(bulkData.data && { data: bulkData.data }),
+      } as any));
 
       await prisma.notification.createMany({
         data: notifications,
@@ -254,7 +254,7 @@ export class NotificationService {
 
       // Cache the result
       if (redisClient.isOpen) {
-        await redisClient.setex(cacheKey, 300, count.toString()); // Cache for 5 minutes
+        await redisClient.setEx(cacheKey, 300, count.toString()); // Cache for 5 minutes
       }
 
       return count;
@@ -290,7 +290,7 @@ export class NotificationService {
       const redisClient = getRedisClient();
       if (redisClient.isOpen) {
         const cacheKey = `${this.UNREAD_COUNT_PREFIX}${userId}`;
-        await redisClient.setex(cacheKey, 300, count.toString());
+        await redisClient.setEx(cacheKey, 300, count.toString());
       }
     } catch (error) {
       console.error('Failed to set unread count in cache:', error);

@@ -9,11 +9,15 @@ import { NotificationService } from '../../services';
  * Process payment for an order
  */
 export const processPayment = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('=== BACKEND PAYMENT PROCESSING DEBUG ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('User ID:', req.user?.id);
+  console.log('Headers:', req.headers);
+
   try {
     const {
       orderId,
       paymentMethod,
-      paymentToken,
     } = req.body;
 
     const userId = req.user?.id;
@@ -133,10 +137,10 @@ export const processPayment = async (req: AuthenticatedRequest, res: Response): 
           },
         });
 
-        // Update vendor earnings to available (since order is confirmed)
+        // Update vendor earnings to paid (since order is confirmed)
         await tx.vendorEarning.updateMany({
           where: { orderId },
-          data: { status: 'available' },
+          data: { status: 'paid' },
         });
       });
 
@@ -146,11 +150,11 @@ export const processPayment = async (req: AuthenticatedRequest, res: Response): 
         message: 'Order confirmed for Cash on Delivery',
       };
     } else {
-      // Process online payment through Stripe
+      // Process online payment through Razorpay
       try {
-        const paymentIntent = await PaymentService.createPaymentIntent({
-          amount: Math.round(Number(order.totalAmount) * 100), // Convert to cents
-          currency: order.currency.toLowerCase(),
+        const razorpayOrder = await PaymentService.createOrder({
+          amount: Math.round(Number(order.totalAmount) * 100), // Convert to paise
+          currency: order.currency.toUpperCase(),
           orderId: order.id,
           metadata: {
             userId: userId.toString(),
@@ -165,17 +169,20 @@ export const processPayment = async (req: AuthenticatedRequest, res: Response): 
             amount: order.totalAmount,
             currency: order.currency,
             status: 'pending',
-            transactionId: paymentIntent.paymentIntentId,
+            transactionId: razorpayOrder.orderId,
             paymentMethod,
-            paymentGateway: 'stripe',
+            paymentGateway: 'razorpay',
           },
         });
 
         paymentResult = {
           paymentId: payment.id,
-          clientSecret: paymentIntent.clientSecret,
+          orderId: razorpayOrder.orderId,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          key: razorpayOrder.key,
           status: 'pending',
-          message: 'Payment intent created successfully',
+          message: 'Razorpay order created successfully',
         };
       } catch (error) {
         console.error('Payment processing error:', error);
@@ -237,29 +244,82 @@ export const processPayment = async (req: AuthenticatedRequest, res: Response): 
 };
 
 /**
- * Handle Stripe webhook events
+ * Verify Razorpay payment
  */
-export const handleWebhook = async (req: Request, res: Response): Promise<void> => {
+export const verifyPayment = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const sig = req.headers['stripe-signature'];
-    
-    if (!sig) {
-      res.status(400).json({
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = req.body;
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
         success: false,
-        message: 'Missing stripe signature',
+        message: 'Authentication required',
       });
       return;
     }
 
-    // TODO: Verify webhook signature with Stripe
-    // const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    const isVerified = await PaymentService.verifyPayment(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    );
 
-    // For now, parse the event directly
-    const event = req.body;
+    if (isVerified) {
+      res.status(200).json({
+        success: true,
+        message: 'Payment verified successfully',
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Payment verification failed',
+      });
+    }
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Payment verification failed',
+      error: {
+        code: 'VERIFICATION_FAILED',
+        details: 'Failed to verify payment',
+      },
+    });
+  }
+};
 
-    await PaymentService.handleWebhook(event);
+/**
+ * Handle Razorpay webhook events
+ */
+export const handleWebhook = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 
-    res.status(200).json({ received: true });
+    // Verify webhook signature
+    const expectedSignature = require('crypto')
+      .createHmac('sha256', secret)
+      .update(JSON.stringify(req.body))
+      .digest('hex');
+
+    const signature = req.headers['x-razorpay-signature'] as string;
+
+    if (signature !== expectedSignature) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid signature',
+      });
+      return;
+    }
+
+    await PaymentService.handleWebhook(req.body);
+
+    res.status(200).json({ status: 'ok' });
   } catch (error) {
     console.error('Webhook error:', error);
     res.status(400).json({

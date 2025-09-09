@@ -173,3 +173,14 @@ export const changePasswordRules: ValidationRule[] = [
   { field: 'currentPassword', type: 'string', required: true },
   { field: 'newPassword', type: 'string', required: true, minLength: 8 },
 ];
+
+export const createOrderRules: ValidationRule[] = [
+  { field: 'items', type: 'array', required: true },
+  { field: 'shippingAddress', type: 'string', required: true },
+  { field: 'billingAddress', type: 'string', required: true },
+  { field: 'paymentMethod', type: 'string', required: true },
+];
+
+export const updateOrderStatusRules: ValidationRule[] = [
+  { field: 'status', type: 'string', required: true },
+];

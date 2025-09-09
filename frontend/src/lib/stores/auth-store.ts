@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { User } from '@/lib/types'
+import { User, ApiResponse } from '@/lib/types'
+import apiClient from '@/lib/api/client'
 
 interface AuthState {
   user: User | null
@@ -13,6 +14,8 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void
   setLoading: (loading: boolean) => void
   refreshTokenFn: (newToken: string) => void
+  refreshAccessToken: () => Promise<string | null>
+  isTokenExpired: () => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -59,6 +62,44 @@ export const useAuthStore = create<AuthState>()(
 
       refreshTokenFn: (newToken: string) => {
         set({ token: newToken })
+      },
+
+      refreshAccessToken: async () => {
+        const { refreshToken } = get()
+        if (!refreshToken) return null
+
+        try {
+          const response = await apiClient.post<ApiResponse<{ token: string }>>('/auth/refresh', { refreshToken })
+          if (!response.data?.data) {
+            throw new Error('Invalid response format')
+          }
+          const { token } = response.data.data
+          set({ token })
+          return token
+        } catch {
+          // If refresh fails, logout
+          set({
+            user: null,
+            token: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isLoading: false,
+          })
+          return null
+        }
+      },
+
+      isTokenExpired: () => {
+        const { token } = get()
+        if (!token) return true
+
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          const currentTime = Date.now() / 1000
+          return payload.exp < currentTime
+        } catch {
+          return true
+        }
       },
     }),
     {

@@ -16,6 +16,8 @@ export {
   vendorRegistrationRules,
   loginRules,
   changePasswordRules,
+  createOrderRules,
+  updateOrderStatusRules,
 } from './validation';
 export {
   advancedRateLimit,
