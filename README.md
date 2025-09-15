@@ -1,135 +1,48 @@
-# Multi-Vendor E-Commerce Platform
-
-A comprehensive e-commerce platform built with Next.js, Node.js, Express, and PostgreSQL, supporting multiple vendors similar to Myntra.
-
-## Features
-
-- **Multi-Vendor Support**: Multiple vendors can sell products on the platform
-- **Modern Tech Stack**: Next.js 14, Node.js, Express, PostgreSQL, Prisma
-- **Authentication**: JWT-based authentication with role-based access
-- **Payment Integration**: Stripe payment processing
-- **Shipping Integration**: Shiprocket integration
-- **File Storage**: Cloudinary for image storage
-- **Real-time Notifications**: WebSocket-based notifications
-- **Admin Dashboard**: Comprehensive admin panel
-- **Vendor Dashboard**: Vendor management interface
-- **Responsive Design**: Mobile-first responsive design
-- **PWA Support**: Progressive Web App capabilities
-
-## Tech Stack
-
-### Frontend
-- Next.js 14 with App Router
-- TypeScript
-- Tailwind CSS
-- Zustand for state management
-- React Hook Form with Zod validation
-
-### Backend
-- Node.js with Express
-- TypeScript
-- PostgreSQL with Prisma ORM
-- Redis for caching
-- JWT for authentication
-- Stripe for payments
-- Shiprocket for shipping
-
-### Infrastructure
-- Docker & Docker Compose
-- Nginx for reverse proxy
-- PostgreSQL database
-- Redis cache
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 18.17.0 or higher
-- npm 9.0.0 or higher
-- Docker and Docker Compose
-- Git
+First, install the dependencies:
 
-### Installation
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd ecommerce-platform
-```
-
-2. Install dependencies
 ```bash
 npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
 ```
 
-3. Set up environment variables
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local
-```
+Then, run the development server:
 
-4. Start Docker services
-```bash
-npm run docker:up
-```
-
-5. Run database migrations
-```bash
-npm run db:migrate
-```
-
-6. Seed the database
-```bash
-npm run db:seed
-```
-
-7. Start the development servers
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-The application will be available at:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-- pgAdmin: http://localhost:5050
-- Redis Commander: http://localhost:8081
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Project Structure
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-```
-ecommerce-platform/
-├── frontend/          # Next.js application
-├── backend/           # Express.js API server
-├── database/          # Database migrations and seeds
-├── docker/            # Docker configurations
-├── docs/              # Documentation
-├── scripts/           # Utility scripts
-└── nginx/             # Nginx configuration
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Available Scripts
+## Learn More
 
-- `npm run dev` - Start development servers
-- `npm run build` - Build for production
-- `npm run start` - Start production servers
-- `npm run test` - Run tests
-- `npm run lint` - Run linting
-- `npm run docker:up` - Start Docker services
-- `npm run docker:down` - Stop Docker services
-- `npm run db:migrate` - Run database migrations
-- `npm run db:seed` - Seed database
+To learn more about Next.js, take a look at the following resources:
 
-## API Documentation
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-API documentation is available at `/api/docs` when the backend server is running.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Contributing
+## Deploy on Vercel
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## License
-
-This project is licensed under the MIT License.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
