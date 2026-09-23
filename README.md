@@ -1,48 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Ecomm
 
-## Getting Started
+![GitHub Stars](https://img.shields.io/github/stars/5h4d0wn1k/ecomm)
+![Last Commit](https://img.shields.io/github/last-commit/5h4d0wn1k/ecomm)
+![GitHub Issues](https://img.shields.io/github/issues/5h4d0wn1k/ecomm)
 
-First, install the dependencies:
+> **Full-stack e-commerce platform** — a Next.js 15 storefront with Stripe and
+> Razorpay payments, Clerk authentication, Razorpay payment gateway flows,
+> ShipRocket shipping, ImageKit media, and Prisma/Neon PostgreSQL.
+
+## Why
+
+Ecomm is a production-style e-commerce storefront built to exercise the full
+commerce stack: catalog, cart, orders, ratings, returns/refunds, seller and
+admin dashboards, plus payments (Stripe + Razorpay) and shipping (ShipRocket).
+The project pairs a rich Next.js App Router UI (admin, store, (public) routes)
+with Prisma + Neon PostgreSQL persistence and CSRF/rate-limit middleware so the
+API stays hardened. It's built as a practical reference for full-stack
+commerce engineering — payments, webhooks, file uploads, and role-based
+multivendor workflows in one codebase.
+
+## Features
+
+- **Storefront + admin/seller apps** — customer-facing store, admin console,
+  seller flows under `app/`, `components/`.
+- **Payments** — Stripe and Razorpay API routes (webhook + verify + capture),
+  Razorpay utility modules.
+- **Auth & sessions** — Clerk integration with admin/seller middlewares.
+- **CMS-like content** — banners, best sellers, category marquees, newsletters,
+  product cards with ratings and reviews.
+- **Commerce workflows** — orders (create/cancel), returns, refunds,
+  replacements, shipping-policy and return-status pages.
+- **Media** — ImageKit-based upload pipeline (server + client helpers).
+- **Rate limiting & safety** — `middlewares/` for CSRF, rate-limit, validation,
+  admin/seller auth; `lib/fileSecurity.js`, `lib/csrf.js`.
+- **Inngest + background jobs** — `inngest/` event-driven tasks.
+
+## Quickstart
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
+cp .env.example .env.local   # DATABASE_URL, Stripe/Razorpay/Clerk/ShipRocket keys
+npx prisma migrate dev       # apply schema (postgres/Neon)
+npm run dev                  # http://localhost:3000
 ```
 
-Then, run the development server:
+Useful scripts: `npm run build` (runs `prisma generate` then `next build`),
+`npm run lint`, `npm run seed` (`node prisma/seed.js`). See
+`How_To_Run_Project.pdf` and `Hosting_Plan.md` in the repo root for deployment
+and hosting specifics.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project structure
+
+```
+app/            # Next.js App Router (store, admin, api, pages)
+components/     # storefront + admin components
+lib/            # prisma, razorpay, csrf, fileSecurity, validation, hooks
+middlewares/    # admin/seller auth, csrf, rate-limit
+configs/        # imageKit, openai, razorpay
+prisma/         # schema.prisma, migrations, seed.js
+inngest/        # background job definitions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Contributing
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Contributions improving migration docs, test coverage, and payment
+integration are welcome. `npm run lint` must stay clean.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+No license file is currently included in this repository.
