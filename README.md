@@ -68,4 +68,5 @@ integration are welcome. `npm run lint` must stay clean.
 
 ## License
 
-No license file is currently included in this repository.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
